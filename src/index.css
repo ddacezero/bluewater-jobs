@@ -1,0 +1,98 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap");
+@import "tailwindcss";
+
+/*
+ * Tailwind CSS v4 theme configuration for Bluewater Jobs ATS.
+ * Design tokens extracted from the original inline JS style objects.
+ */
+@theme {
+  /* Primary brand colors */
+  --color-primary: #1f75b9;
+  --color-primary-light: #edf5fc;
+  --color-primary-hover: #1a6aaa;
+  --color-primary-gradient-start: #1f75b9;
+  --color-primary-gradient-end: #b6d6eb;
+
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-surface-bg: #f7fafc;
+  --color-surface-hover: #f5f9fc;
+  --color-surface-border: #e2eaf1;
+  --color-surface-border-light: #f0f4f8;
+  --color-surface-muted: #d9e8f2;
+
+  /* Text colors */
+  --color-text-primary: #1a2332;
+  --color-text-heading: #0f1d2e;
+  --color-text-secondary: #7c8da5;
+  --color-text-muted: #94a3b8;
+  --color-text-subtle: #64748b;
+  --color-text-placeholder: #b8c8d8;
+
+  /* Status / stage colors */
+  --color-success: #16a34a;
+  --color-success-dark: #2e7d32;
+  --color-success-bg: #e8f5e9;
+  --color-success-border: #a5d6a7;
+
+  --color-danger: #ef5350;
+  --color-danger-dark: #c62828;
+  --color-danger-bg: #ffebee;
+  --color-danger-border: #ef9a9a;
+
+  --color-warning: #fb8c00;
+  --color-warning-dark: #e65100;
+  --color-warning-bg: #fff3e0;
+
+  --color-purple: #8e24aa;
+  --color-purple-light: #f3e5f5;
+  --color-purple-dark: #6a1b9a;
+  --color-purple-gradient-start: #d4b6eb;
+  --color-purple-gradient-end: #8e24aa;
+
+  --color-notes-bg: #fffde7;
+  --color-notes-border: #fff9c4;
+  --color-notes-text: #5d4037;
+
+  --color-exam-bg: #fff8e1;
+  --color-exam-border: #ffe082;
+
+  /* NQ (Not Qualified) */
+  --color-nq-gradient-start: #bf360c;
+  --color-nq-gradient-mid: #ff6d00;
+  --color-nq-gradient-end: #ffb74d;
+
+  /* Typography */
+  --font-family-sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 4px rgba(31, 117, 185, 0.04);
+  --shadow-btn: 0 2px 8px rgba(31, 117, 185, 0.2);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --shadow-sidebar: 4px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Base resets */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary);
+  background: var(--color-surface-bg);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
