@@ -13,26 +13,25 @@ const STAGE_COLORS = {
   "Job Offer": { bg: "#F3E5F5", text: "#6A1B9A", dot: "#8E24AA" },
   "Hired": { bg: "#E0F2F1", text: "#00695C", dot: "#00897B" },
   "Rejected": { bg: "#FFEBEE", text: "#C62828", dot: "#EF5350" },
-  "Not Qualified": { bg: "#FFF3E0", text: "#BF360C", dot: "#FF6D00" },
 };
 
 const INIT_CANDIDATES = [
-  { id: 1, name: "Ricardo Santos", role: "Chef de Partie (Hot)", stage: "Initial Interview", rating: 5, applied: "Mar 2, 2026", email: "r.santos@email.com", avatar: "RS", tags: ["Hot Kitchen", "Sauces", "Grill", "Fine Dining"], source: "LinkedIn", jobId: 1, recruiter: "Joela", notes: "10 years experience in 5-star hotel kitchens. Very strong on sauces and grill work.", resumeName: "Ricardo_Santos_CV.pdf", talents: ["Basketball", "Guitar"], examResultName: "" },
-  { id: 2, name: "Maria Dela Cruz", role: "Demi Baker", stage: "Screening", rating: 4, applied: "Mar 4, 2026", email: "m.delacruz@email.com", avatar: "MD", tags: ["Pastry", "Bread Making", "Plating"], source: "Referral", jobId: 2, recruiter: "Ranie", notes: "", resumeName: "Maria_DelaCruz_Resume.pdf", talents: ["Baking Competitions"], examResultName: "" },
-  { id: 3, name: "Jun Reyes", role: "Plumbing Supervisor", stage: "Job Offer", rating: 5, applied: "Feb 28, 2026", email: "j.reyes@email.com", avatar: "JR", tags: ["Plumbing Systems", "Team Lead", "Preventive Maintenance"], source: "Indeed", jobId: 3, recruiter: "Joela", notes: "Excellent candidate. 15 years in hotel maintenance. Passed all interviews.", resumeName: "Jun_Reyes_CV.pdf", talents: ["Swimming"], examResultName: "Jun_Reyes_Exam.pdf" },
-  { id: 4, name: "Angelica Torres", role: "Chef de Partie (Hot)", stage: "Applied", rating: 3, applied: "Mar 5, 2026", email: "a.torres@email.com", avatar: "AT", tags: ["Asian Cuisine", "Wok Station"], source: "Website", jobId: 1, recruiter: "Ranie", notes: "", resumeName: "", talents: [], examResultName: "" },
-  { id: 5, name: "Carlo Mendoza", role: "Carpenter", stage: "Departmental Interview", rating: 4, applied: "Mar 1, 2026", email: "c.mendoza@email.com", avatar: "CM", tags: ["Woodworking", "Furniture Repair", "Finishing"], source: "LinkedIn", jobId: 4, recruiter: "Joela", notes: "Great portfolio of resort furniture restoration. Engineering head wants to meet.", resumeName: "Carlo_Mendoza_Resume.pdf", talents: ["Woodcarving"], examResultName: "" },
-  { id: 6, name: "Patricia Lim", role: "Demi Baker", stage: "Applied", rating: 3, applied: "Mar 6, 2026", email: "p.lim@email.com", avatar: "PL", tags: ["Cakes", "Desserts"], source: "Website", jobId: 2, recruiter: "Joela", notes: "", resumeName: "", talents: [], examResultName: "" },
-  { id: 7, name: "Dennis Aquino", role: "Plumbing Supervisor", stage: "Exam", rating: 4, applied: "Mar 3, 2026", email: "d.aquino@email.com", avatar: "DA", tags: ["Water Systems", "HVAC Basics", "Troubleshooting"], source: "Referral", jobId: 3, recruiter: "Ranie", notes: "Scheduled for practical skills exam.", resumeName: "Dennis_Aquino_CV.pdf", talents: [], examResultName: "Dennis_Aquino_Exam.pdf" },
-  { id: 8, name: "Miguel Garcia", role: "Carpenter", stage: "Hired", rating: 5, applied: "Feb 20, 2026", email: "m.garcia@email.com", avatar: "MG", tags: ["Cabinetry", "Installation", "Blueprint Reading"], source: "LinkedIn", jobId: 4, recruiter: "Ranie", notes: "Successfully hired. Start date Mar 15. Assigned to resort renovation project.", resumeName: "Miguel_Garcia_Resume.pdf", talents: ["Carpentry Art"], examResultName: "Miguel_Garcia_Exam.pdf" },
-  { id: 9, name: "Anna Villanueva", role: "Chef de Partie (Hot)", stage: "Final Interview", rating: 4, applied: "Mar 3, 2026", email: "a.villanueva@email.com", avatar: "AV", tags: ["Mediterranean", "Sous Vide", "Banquet"], source: "Indeed", jobId: 1, recruiter: "Joela", notes: "Final interview with Executive Chef scheduled.", resumeName: "Anna_Villanueva_CV.pdf", talents: ["Cooking Shows"], examResultName: "" },
-  { id: 10, name: "Bryan Tan", role: "Front Office Supervisor", stage: "Applied", rating: 3, applied: "Mar 7, 2026", email: "b.tan@email.com", avatar: "BT", tags: ["Guest Relations", "Opera PMS", "Check-in/Check-out"], source: "Website", jobId: 5, recruiter: "Ranie", notes: "", resumeName: "", talents: [], examResultName: "" },
-  { id: 11, name: "Christine Uy", role: "Front Office Supervisor", stage: "Screening", rating: 4, applied: "Mar 5, 2026", email: "c.uy@email.com", avatar: "CU", tags: ["Reservations", "VIP Handling", "Night Audit"], source: "LinkedIn", jobId: 5, recruiter: "Joela", notes: "", resumeName: "Christine_Uy_Resume.pdf", talents: ["Volleyball"], examResultName: "" },
-  { id: 12, name: "Roberto Navarro", role: "Plumbing Supervisor", stage: "Rejected", rating: 2, applied: "Feb 25, 2026", email: "r.navarro@email.com", avatar: "RN", tags: ["Basic Plumbing", "Residential"], source: "Indeed", jobId: 3, recruiter: "Ranie", notes: "Lacks experience in large-scale commercial/resort plumbing systems.", resumeName: "", talents: [], examResultName: "" },
-  { id: 13, name: "Grace Fernandez", role: "Baker", stage: "Initial Interview", rating: 4, applied: "Mar 1, 2026", email: "g.fernandez@email.com", avatar: "GF", tags: ["Artisan Bread", "Viennoiserie", "Sourdough"], source: "Referral", jobId: 6, recruiter: "Ranie", notes: "Impressive bread portfolio.", resumeName: "Grace_Fernandez_CV.pdf", talents: ["Food Photography"], examResultName: "" },
-  { id: 14, name: "Mark Espinosa", role: "Baker", stage: "Exam", rating: 3, applied: "Mar 4, 2026", email: "m.espinosa@email.com", avatar: "ME", tags: ["Production Baking", "Pastry Basics"], source: "Website", jobId: 6, recruiter: "Joela", notes: "Scheduled for practical baking exam.", resumeName: "Mark_Espinosa_Resume.pdf", talents: [], examResultName: "Mark_Espinosa_Exam.pdf" },
-  { id: 15, name: "Sophia Cruz", role: "Housekeeping Team Leader", stage: "Screening", rating: 4, applied: "Mar 6, 2026", email: "s.cruz@email.com", avatar: "SC", tags: ["Room Inspection", "Team Management", "Laundry Ops"], source: "LinkedIn", jobId: 7, recruiter: "Joela", notes: "", resumeName: "Sophia_Cruz_CV.pdf", talents: ["Badminton"], examResultName: "" },
-  { id: 16, name: "Jason Lee", role: "Housekeeping Team Leader", stage: "Applied", rating: 3, applied: "Mar 7, 2026", email: "j.lee@email.com", avatar: "JL", tags: ["Inventory", "Quality Control"], source: "Indeed", jobId: 7, recruiter: "Ranie", notes: "", resumeName: "", talents: [], examResultName: "" },
+  { id: 1, name: "Ricardo Santos", role: "Chef de Partie (Hot)", stage: "Initial Interview", rating: 5, applied: "Mar 2, 2026", email: "r.santos@email.com", avatar: "RS", tags: ["Hot Kitchen", "Sauces", "Grill", "Fine Dining"], source: "LinkedIn", jobId: 1, recruiter: "Joela", notes: "10 years experience in 5-star hotel kitchens. Very strong on sauces and grill work.", resumeName: "Ricardo_Santos_CV.pdf" },
+  { id: 2, name: "Maria Dela Cruz", role: "Demi Baker", stage: "Screening", rating: 4, applied: "Mar 4, 2026", email: "m.delacruz@email.com", avatar: "MD", tags: ["Pastry", "Bread Making", "Plating"], source: "Referral", jobId: 2, recruiter: "Ranie", notes: "", resumeName: "Maria_DelaCruz_Resume.pdf" },
+  { id: 3, name: "Jun Reyes", role: "Plumbing Supervisor", stage: "Job Offer", rating: 5, applied: "Feb 28, 2026", email: "j.reyes@email.com", avatar: "JR", tags: ["Plumbing Systems", "Team Lead", "Preventive Maintenance"], source: "Indeed", jobId: 3, recruiter: "Joela", notes: "Excellent candidate. 15 years in hotel maintenance. Passed all interviews.", resumeName: "Jun_Reyes_CV.pdf" },
+  { id: 4, name: "Angelica Torres", role: "Chef de Partie (Hot)", stage: "Applied", rating: 3, applied: "Mar 5, 2026", email: "a.torres@email.com", avatar: "AT", tags: ["Asian Cuisine", "Wok Station"], source: "Website", jobId: 1, recruiter: "Ranie", notes: "", resumeName: "" },
+  { id: 5, name: "Carlo Mendoza", role: "Carpenter", stage: "Departmental Interview", rating: 4, applied: "Mar 1, 2026", email: "c.mendoza@email.com", avatar: "CM", tags: ["Woodworking", "Furniture Repair", "Finishing"], source: "LinkedIn", jobId: 4, recruiter: "Joela", notes: "Great portfolio of resort furniture restoration. Engineering head wants to meet.", resumeName: "Carlo_Mendoza_Resume.pdf" },
+  { id: 6, name: "Patricia Lim", role: "Demi Baker", stage: "Applied", rating: 3, applied: "Mar 6, 2026", email: "p.lim@email.com", avatar: "PL", tags: ["Cakes", "Desserts"], source: "Website", jobId: 2, recruiter: "Joela", notes: "", resumeName: "" },
+  { id: 7, name: "Dennis Aquino", role: "Plumbing Supervisor", stage: "Exam", rating: 4, applied: "Mar 3, 2026", email: "d.aquino@email.com", avatar: "DA", tags: ["Water Systems", "HVAC Basics", "Troubleshooting"], source: "Referral", jobId: 3, recruiter: "Ranie", notes: "Scheduled for practical skills exam.", resumeName: "Dennis_Aquino_CV.pdf" },
+  { id: 8, name: "Miguel Garcia", role: "Carpenter", stage: "Hired", rating: 5, applied: "Feb 20, 2026", email: "m.garcia@email.com", avatar: "MG", tags: ["Cabinetry", "Installation", "Blueprint Reading"], source: "LinkedIn", jobId: 4, recruiter: "Ranie", notes: "Successfully hired. Start date Mar 15. Assigned to resort renovation project.", resumeName: "Miguel_Garcia_Resume.pdf" },
+  { id: 9, name: "Anna Villanueva", role: "Chef de Partie (Hot)", stage: "Final Interview", rating: 4, applied: "Mar 3, 2026", email: "a.villanueva@email.com", avatar: "AV", tags: ["Mediterranean", "Sous Vide", "Banquet"], source: "Indeed", jobId: 1, recruiter: "Joela", notes: "Final interview with Executive Chef scheduled.", resumeName: "Anna_Villanueva_CV.pdf" },
+  { id: 10, name: "Bryan Tan", role: "Front Office Supervisor", stage: "Applied", rating: 3, applied: "Mar 7, 2026", email: "b.tan@email.com", avatar: "BT", tags: ["Guest Relations", "Opera PMS", "Check-in/Check-out"], source: "Website", jobId: 5, recruiter: "Ranie", notes: "", resumeName: "" },
+  { id: 11, name: "Christine Uy", role: "Front Office Supervisor", stage: "Screening", rating: 4, applied: "Mar 5, 2026", email: "c.uy@email.com", avatar: "CU", tags: ["Reservations", "VIP Handling", "Night Audit"], source: "LinkedIn", jobId: 5, recruiter: "Joela", notes: "", resumeName: "Christine_Uy_Resume.pdf" },
+  { id: 12, name: "Roberto Navarro", role: "Plumbing Supervisor", stage: "Rejected", rating: 2, applied: "Feb 25, 2026", email: "r.navarro@email.com", avatar: "RN", tags: ["Basic Plumbing", "Residential"], source: "Indeed", jobId: 3, recruiter: "Ranie", notes: "Lacks experience in large-scale commercial/resort plumbing systems.", resumeName: "" },
+  { id: 13, name: "Grace Fernandez", role: "Baker", stage: "Initial Interview", rating: 4, applied: "Mar 1, 2026", email: "g.fernandez@email.com", avatar: "GF", tags: ["Artisan Bread", "Viennoiserie", "Sourdough"], source: "Referral", jobId: 6, recruiter: "Ranie", notes: "Impressive bread portfolio.", resumeName: "Grace_Fernandez_CV.pdf" },
+  { id: 14, name: "Mark Espinosa", role: "Baker", stage: "Exam", rating: 3, applied: "Mar 4, 2026", email: "m.espinosa@email.com", avatar: "ME", tags: ["Production Baking", "Pastry Basics"], source: "Website", jobId: 6, recruiter: "Joela", notes: "Scheduled for practical baking exam.", resumeName: "Mark_Espinosa_Resume.pdf" },
+  { id: 15, name: "Sophia Cruz", role: "Housekeeping Team Leader", stage: "Screening", rating: 4, applied: "Mar 6, 2026", email: "s.cruz@email.com", avatar: "SC", tags: ["Room Inspection", "Team Management", "Laundry Ops"], source: "LinkedIn", jobId: 7, recruiter: "Joela", notes: "", resumeName: "Sophia_Cruz_CV.pdf" },
+  { id: 16, name: "Jason Lee", role: "Housekeeping Team Leader", stage: "Applied", rating: 3, applied: "Mar 7, 2026", email: "j.lee@email.com", avatar: "JL", tags: ["Inventory", "Quality Control"], source: "Indeed", jobId: 7, recruiter: "Ranie", notes: "", resumeName: "" },
 ];
 
 const INIT_POOL = [
@@ -45,15 +44,15 @@ const INIT_POOL = [
 ];
 
 const INIT_JOBS = [
-  { id: 1, title: "Chef de Partie (Hot)", dept: "Kitchen", location: "Bluewater Maribago", type: "Full-time", status: "Active", posted: "Feb 15, 2026", description: "Oversee the hot kitchen section including grill, sauces, and main course preparation for our resort restaurant and banquet operations.", qualifications: "At least 3 years experience in a 4-5 star hotel kitchen. Culinary diploma or equivalent. Strong knowledge of international cuisines, food safety and hygiene standards." },
-  { id: 2, title: "Demi Baker", dept: "Pastry & Bakery", location: "Bluewater Maribago", type: "Full-time", status: "Active", posted: "Feb 20, 2026", description: "Assist the Head Baker in daily pastry and bread production for the resort.", qualifications: "At least 1 year experience in pastry/bakery. Knowledge of bread making, pastry techniques, and food safety. Culinary arts certificate preferred." },
-  { id: 3, title: "Plumbing Supervisor", dept: "Engineering", location: "Bluewater Sumilon", type: "Full-time", status: "Active", posted: "Feb 18, 2026", description: "Lead the plumbing maintenance team to ensure all resort water systems and pools are in top condition.", qualifications: "At least 5 years experience in commercial plumbing. TESDA NC II certification. Experience with large-scale water systems, pools, and preventive maintenance." },
-  { id: 4, title: "Carpenter", dept: "Engineering", location: "Bluewater Panglao", type: "Full-time", status: "Active", posted: "Feb 22, 2026", description: "Handle furniture repair, custom woodwork, and resort fixture installation.", qualifications: "At least 2 years experience in furniture repair and custom woodwork. TESDA certification preferred. Ability to read blueprints and technical drawings." },
-  { id: 5, title: "Front Office Supervisor", dept: "Front Office", location: "Almont Beach Resort", type: "Full-time", status: "Active", posted: "Mar 1, 2026", description: "Supervise the front desk team, manage guest check-in/check-out, and handle VIP arrivals.", qualifications: "At least 2 years experience in hotel front office operations. Proficiency in Opera PMS or similar. Excellent communication and guest relations skills." },
-  { id: 6, title: "Baker", dept: "Pastry & Bakery", location: "Bluewater Panglao", type: "Full-time", status: "Active", posted: "Feb 25, 2026", description: "Produce artisan breads, rolls, and baked goods daily for the resort.", qualifications: "At least 2 years experience in commercial baking. Knowledge of artisan bread techniques and pastry basics. Food safety certification required." },
-  { id: 7, title: "Housekeeping Team Leader", dept: "Housekeeping", location: "Almont City Hotel", type: "Full-time", status: "Active", posted: "Mar 3, 2026", description: "Lead a team of room attendants and public area cleaners.", qualifications: "At least 2 years experience in hotel housekeeping. Supervisory experience preferred. Knowledge of cleaning standards and inventory management." },
-  { id: 8, title: "Commis Chef", dept: "Kitchen", location: "Bluewater Maribago", type: "Full-time", status: "Closed", posted: "Jan 10, 2026", closed: "Feb 10, 2026", description: "Entry-level kitchen position assisting senior chefs.", qualifications: "Basic culinary training or TESDA certification. Knowledge of food preparation and kitchen hygiene. Willing to work in shifts." },
-  { id: 9, title: "Spa Therapist", dept: "Spa & Wellness", location: "Amuma Spa", type: "Full-time", status: "Closed", posted: "Nov 15, 2025", closed: "Jan 20, 2026", description: "Provide massage and body treatments. Position paused due to spa renovation.", qualifications: "At least 1 year experience in spa/wellness. TESDA Hilot or massage therapy certification. Knowledge of various massage techniques." },
+  { id: 1, title: "Chef de Partie (Hot)", dept: "Kitchen", location: "Bluewater Maribago", type: "Full-time", status: "Active", posted: "Feb 15, 2026", description: "Oversee the hot kitchen section including grill, sauces, and main course preparation for our resort restaurant and banquet operations." },
+  { id: 2, title: "Demi Baker", dept: "Pastry & Bakery", location: "Bluewater Maribago", type: "Full-time", status: "Active", posted: "Feb 20, 2026", description: "Assist the Head Baker in daily pastry and bread production for the resort." },
+  { id: 3, title: "Plumbing Supervisor", dept: "Engineering", location: "Bluewater Sumilon", type: "Full-time", status: "Active", posted: "Feb 18, 2026", description: "Lead the plumbing maintenance team to ensure all resort water systems and pools are in top condition." },
+  { id: 4, title: "Carpenter", dept: "Engineering", location: "Bluewater Panglao", type: "Full-time", status: "Active", posted: "Feb 22, 2026", description: "Handle furniture repair, custom woodwork, and resort fixture installation." },
+  { id: 5, title: "Front Office Supervisor", dept: "Front Office", location: "Almont Beach Resort", type: "Full-time", status: "Active", posted: "Mar 1, 2026", description: "Supervise the front desk team, manage guest check-in/check-out, and handle VIP arrivals." },
+  { id: 6, title: "Baker", dept: "Pastry & Bakery", location: "Bluewater Panglao", type: "Full-time", status: "Active", posted: "Feb 25, 2026", description: "Produce artisan breads, rolls, and baked goods daily for the resort." },
+  { id: 7, title: "Housekeeping Team Leader", dept: "Housekeeping", location: "Almont City Hotel", type: "Full-time", status: "Active", posted: "Mar 3, 2026", description: "Lead a team of room attendants and public area cleaners." },
+  { id: 8, title: "Commis Chef", dept: "Kitchen", location: "Bluewater Maribago", type: "Full-time", status: "Closed", posted: "Jan 10, 2026", closed: "Feb 10, 2026", description: "Entry-level kitchen position assisting senior chefs." },
+  { id: 9, title: "Spa Therapist", dept: "Spa & Wellness", location: "Amuma Spa", type: "Full-time", status: "Closed", posted: "Nov 15, 2025", closed: "Jan 20, 2026", description: "Provide massage and body treatments. Position paused due to spa renovation." },
 ];
 
 const I = {
@@ -84,10 +83,6 @@ const I = {
   Cal: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   Check: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>,
   Menu: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
-  Ban: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>,
-  Trophy: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 22V8a6 6 0 0 0-6-6h16a6 6 0 0 0-6 6v14"/></svg>,
-  Clipboard: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>,
-  ListCheck: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg>,
 };
 
 const Badge = ({stage}) => { const c = STAGE_COLORS[stage]||STAGE_COLORS["Applied"]; return <span style={{background:c.bg,color:c.text,padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:600,display:"inline-flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}><span style={{width:6,height:6,borderRadius:"50%",background:c.dot}}/>{stage}</span>; };
@@ -116,11 +111,7 @@ export default function App() {
   const [fillTags, setFillTags] = useState({});
   const [mob, setMob] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [nqCandidate, setNqCandidate] = useState(null);
-  const [nqAction, setNqAction] = useState(null);
-  const [nqJob, setNqJob] = useState("");
   const fileRef = useRef(null);
-  const examRef = useRef(null);
 
   useEffect(()=>{
     setAnim(true);
@@ -145,11 +136,8 @@ export default function App() {
 
   const moveStage = (id,ns) => { setCandidates(p=>p.map(c=>c.id===id?{...c,stage:ns}:c)); if(selC?.id===id) setSelC(p=>({...p,stage:ns})); };
   const updateCandidate = (id,upd) => { setCandidates(p=>p.map(c=>c.id===id?{...c,...upd}:c)); if(selC?.id===id) setSelC(p=>({...p,...upd})); };
-  const endorseCandidate = (c,jid) => { const j=jobs.find(x=>x.id===jid); if(!j)return; setCandidates(p=>[{id:Date.now(),name:c.name,email:c.email,role:j.title,stage:"Screening",rating:c.rating,applied:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),avatar:c.avatar,tags:[...c.tags],source:"Endorsed",jobId:jid,recruiter:c.recruiter||"",notes:"",resumeName:"",talents:c.talents||[],examResultName:"",endorsedFrom:c.role},...p]); setSelC(null); };
-  const reactivate = (pc,jid) => { const j=jobs.find(x=>x.id===jid); if(!j)return; setCandidates(p=>[{id:Date.now(),name:pc.name,email:pc.email,role:j.title,stage:"Screening",rating:pc.rating,applied:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),avatar:pc.avatar,tags:[...pc.tags],source:"Talent Pool",jobId:jid,recruiter:"",notes:"",resumeName:"",talents:pc.talents||[],examResultName:""},...p]); setPool(p=>p.filter(x=>x.id!==pc.id)); setSelPool(null); };
-  const markNotQualified = (c) => { moveStage(c.id,"Rejected"); updateCandidate(c.id,{notes:(c.notes?c.notes+"\n":"")+"Tagged as Not Qualified."}); };
-  const addCandidateToPool = (c) => { setPool(p=>[...p,{id:Date.now(),name:c.name,role:c.role,lastStage:c.stage,rating:c.rating,applied:c.applied,email:c.email,avatar:c.avatar,tags:[...c.tags],source:c.source,jobId:c.jobId,closedJob:c.role,pooledDate:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),notes:(c.notes?c.notes+"\n":"")+"Not Qualified for "+c.role+". Added to talent pool.",talents:c.talents||[]}]); setCandidates(p=>p.filter(x=>x.id!==c.id)); };
-  const nqEndorse = (c,jid) => { const j=jobs.find(x=>x.id===jid); if(!j)return; markNotQualified(c); setCandidates(p=>[{id:Date.now(),name:c.name,email:c.email,role:j.title,stage:"Screening",rating:c.rating,applied:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),avatar:c.avatar,tags:[...c.tags],source:"Endorsed",jobId:jid,recruiter:c.recruiter||"",notes:"Endorsed from "+c.role+" (Not Qualified)",resumeName:"",talents:c.talents||[],examResultName:"",endorsedFrom:c.role},...p]); };
+  const endorseCandidate = (c,jid) => { const j=jobs.find(x=>x.id===jid); if(!j)return; setCandidates(p=>[{id:Date.now(),name:c.name,email:c.email,role:j.title,stage:"Screening",rating:c.rating,applied:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),avatar:c.avatar,tags:[...c.tags],source:"Endorsed",jobId:jid,recruiter:c.recruiter||"",notes:"",resumeName:"",endorsedFrom:c.role},...p]); setSelC(null); };
+  const reactivate = (pc,jid) => { const j=jobs.find(x=>x.id===jid); if(!j)return; setCandidates(p=>[{id:Date.now(),name:pc.name,email:pc.email,role:j.title,stage:"Screening",rating:pc.rating,applied:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),avatar:pc.avatar,tags:[...pc.tags],source:"Talent Pool",jobId:jid,recruiter:"",notes:"",resumeName:""},...p]); setPool(p=>p.filter(x=>x.id!==pc.id)); setSelPool(null); };
 
   const goPage=(p)=>{setPage(p);setMenuOpen(false);};
   const px=mob?16:32;
@@ -287,7 +275,7 @@ export default function App() {
   const PipePage=()=>{
     const ps=STAGES.filter(s=>s!=="Rejected");
     return(<div>
-      <div style={{marginBottom:16}}><h1 style={{fontSize:mob?20:24,fontWeight:700,margin:0}}>Pipeline</h1><p style={{color:"#7c8da5",margin:"4px 0 0",fontSize:13}}>Kanban view of your hiring pipeline</p></div>
+      <div style={{marginBottom:16}}><h1 style={{fontSize:mob?20:24,fontWeight:700,margin:0}}>Pipeline</h1></div>
       <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:16}}>
         {ps.map(stage=>{const items=candidates.filter(c=>c.stage===stage);const sc=STAGE_COLORS[stage];return(
           <div key={stage} style={{minWidth:mob?200:210,flex:mob?undefined:1}}>
@@ -295,11 +283,7 @@ export default function App() {
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {items.map(c=>(<div key={c.id} style={{...S.card,padding:14,cursor:"pointer",borderLeft:`3px solid ${sc.dot}`}} onClick={()=>setSelC(c)}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><div style={S.av(28)}>{c.avatar}</div><div><div style={{fontWeight:600,fontSize:12.5}}>{c.name}</div><div style={{fontSize:10.5,color:"#94a3b8"}}>{c.recruiter||c.role}</div></div></div>
-                <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:4}}>{c.tags.slice(0,2).map(t=><span key={t} style={{...S.tag,fontSize:9,padding:"2px 6px"}}>{t}</span>)}</div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <Stars v={c.rating}/>
-                  {stage==="Applied"&&<button style={{background:"#FFF3E0",border:"1px solid #FFCC80",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,color:"#BF360C",cursor:"pointer",display:"flex",alignItems:"center",gap:3}} onClick={e=>{e.stopPropagation();setNqCandidate(c);setNqAction(null);setNqJob("");}}><I.Ban/> Not Qualified</button>}
-                </div>
+                <Stars v={c.rating}/>
               </div>))}
               {items.length===0&&<div style={{padding:20,textAlign:"center",color:"#b8c8d8",fontSize:12,border:"2px dashed #DDE8F0",borderRadius:10}}>Empty</div>}
             </div>
@@ -319,17 +303,9 @@ export default function App() {
         {jobs.map(j=>{const jc=candidates.filter(c=>c.jobId===j.id);return(
           <div key={j.id} style={{...S.card,cursor:"pointer",position:"relative",overflow:"hidden"}} onClick={()=>{setEditJob(j);setShowJobModal(true);}}>
             {j.status==="Closed"&&<div style={{position:"absolute",top:0,right:0,background:"#FFEBEE",color:"#C62828",padding:"3px 12px",fontSize:10,fontWeight:700,borderRadius:"0 0 0 10px"}}>Closed</div>}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-              <div><h3 style={{margin:0,fontSize:15,fontWeight:700}}>{j.title}</h3>
-              <p style={{margin:"4px 0 0",fontSize:12,color:"#7c8da5"}}>{j.dept} · {j.type}</p></div>
-              {j.status!=="Closed"&&<button style={{...S.btn("outline","sm"),fontSize:11}} onClick={e=>{e.stopPropagation();setEditJob(j);setShowJobModal(true);}}><I.Edit/> Edit</button>}
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:5,margin:"8px 0 10px",fontSize:12,color:"#64748b"}}><I.Loc/>{j.location}</div>
-            <p style={{margin:"0 0 10px",fontSize:12,color:"#64748b",lineHeight:1.5}}>{j.description}</p>
-            {j.qualifications&&<div style={{marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><I.ListCheck/><span style={{fontSize:11,fontWeight:700,color:"#7c8da5",textTransform:"uppercase"}}>Qualifications</span></div>
-              <p style={{margin:0,fontSize:11.5,color:"#4a5568",lineHeight:1.5,background:"#F5F9FC",borderRadius:8,padding:"8px 10px"}}>{j.qualifications}</p>
-            </div>}
+            <h3 style={{margin:0,fontSize:15,fontWeight:700}}>{j.title}</h3>
+            <p style={{margin:"4px 0 0",fontSize:12,color:"#7c8da5"}}>{j.dept} · {j.type}</p>
+            <div style={{display:"flex",alignItems:"center",gap:5,margin:"8px 0 12px",fontSize:12,color:"#64748b"}}><I.Loc/>{j.location}</div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:"1px solid #F0F4F8",paddingTop:10}}>
               <span style={{fontSize:12}}><strong style={{color:"#1F75B9"}}>{jc.length}</strong> <span style={{color:"#94a3b8"}}>applicants</span></span>
               <span style={{fontSize:11,color:"#94a3b8"}}>{j.posted}</span>
@@ -467,17 +443,14 @@ export default function App() {
 
   /* ══════ CANDIDATE DRAWER ══════ */
   const CDrawer=()=>{
-    const [ej,setEJ]=useState("");const [showE,setShowE]=useState(false);const [eNotes,setEN]=useState(false);const [nd,setND]=useState("");const [ns,setNS]=useState("");const [si,setSI]=useState(false);const [ti,setTI]=useState(false);const [nt,setNT]=useState("");
+    const [ej,setEJ]=useState("");const [showE,setShowE]=useState(false);const [eNotes,setEN]=useState(false);const [nd,setND]=useState("");const [ns,setNS]=useState("");const [si,setSI]=useState(false);
     if(!selC)return null;
     const c=candidates.find(x=>x.id===selC.id)||selC;
     const next=STAGES.filter(s=>s!==c.stage&&s!=="Rejected");
     const other=activeJobs.filter(j=>j.id!==c.jobId);
-    const close=()=>{setSelC(null);setShowE(false);setEJ("");setEN(false);setSI(false);setTI(false);setNT("");};
+    const close=()=>{setSelC(null);setShowE(false);setEJ("");setEN(false);setSI(false);};
     const addSkill=()=>{if(!ns.trim())return;updateCandidate(c.id,{tags:[...c.tags,ns.trim()]});setNS("");};
     const rmSkill=(t)=>updateCandidate(c.id,{tags:c.tags.filter(x=>x!==t)});
-    const addTalent=()=>{if(!nt.trim())return;updateCandidate(c.id,{talents:[...(c.talents||[]),nt.trim()]});setNT("");};
-    const rmTalent=(t)=>updateCandidate(c.id,{talents:(c.talents||[]).filter(x=>x!==t)});
-    const hExam=(e)=>{const f=e.target.files[0];if(f)updateCandidate(c.id,{examResultName:f.name});};
     const saveN=()=>{updateCandidate(c.id,{notes:nd});setEN(false);};
     const hRes=(e)=>{const f=e.target.files[0];if(f)updateCandidate(c.id,{resumeName:f.name});};
     return(
@@ -526,32 +499,12 @@ export default function App() {
                 {c.notes?<p style={{margin:0,fontSize:12,color:"#5D4037",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{c.notes}</p>:<p style={{margin:0,fontSize:12,color:"#b8c8d8",fontStyle:"italic"}}>No notes</p>}
               </div>}
             </div>
-            {/* Talents / Hobbies / Sports */}
-            <div style={{marginBottom:14}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                <span style={{fontSize:11,color:"#7c8da5",fontWeight:600,textTransform:"uppercase"}}>Talents / Hobbies / Sports</span>
-                <button style={{...S.btn("outline","xs")}} onClick={()=>setTI(!ti)}><I.Trophy/>{ti?"Done":"Edit"}</button>
-              </div>
-              <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                {(c.talents||[]).map(t=><span key={t} style={{background:"#F3E5F5",color:"#7B1FA2",borderRadius:8,padding:"4px 10px",fontSize:12,fontWeight:600,display:"inline-flex",alignItems:"center",gap:4}}>{t}{ti&&<span style={{cursor:"pointer",fontWeight:800,color:"#C62828"}} onClick={()=>rmTalent(t)}>×</span>}</span>)}
-                {!(c.talents||[]).length&&!ti&&<span style={{fontSize:12,color:"#b8c8d8"}}>None</span>}
-              </div>
-              {ti&&<div style={{display:"flex",gap:6,marginTop:6}}><input style={{...S.fs,flex:1}} placeholder="Add talent, hobby, or sport..." value={nt} onChange={e=>setNT(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addTalent();}}/><button style={S.btn("primary","sm")} onClick={addTalent}>Add</button></div>}
-            </div>
             {/* Resume */}
             <div style={{marginBottom:14}}>
               <span style={{fontSize:11,color:"#7c8da5",fontWeight:600,textTransform:"uppercase",display:"block",marginBottom:6}}>Resume</span>
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 {c.resumeName?<div style={{background:"#F5F9FC",border:"1px solid #D9E8F2",borderRadius:10,padding:"6px 12px",display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}><I.Note/><span style={{fontSize:12,fontWeight:500,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.resumeName}</span><button style={{...S.btn("primary","xs")}}><I.Download/></button></div>:<span style={{fontSize:12,color:"#b8c8d8",flex:1}}>No resume</span>}
-                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{display:"none"}} onChange={hRes}/><button style={S.btn("outline","sm")} onClick={()=>fileRef.current?.click()}><I.Upload/>{mob?"":"Replace"}</button>
-              </div>
-            </div>
-            {/* Exam Results */}
-            <div style={{marginBottom:14}}>
-              <span style={{fontSize:11,color:"#7c8da5",fontWeight:600,textTransform:"uppercase",display:"block",marginBottom:6}}>Exam Results</span>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                {c.examResultName?<div style={{background:"#FFF8E1",border:"1px solid #FFE082",borderRadius:10,padding:"6px 12px",display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}><I.Clipboard/><span style={{fontSize:12,fontWeight:500,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.examResultName}</span><button style={{...S.btn("primary","xs")}}><I.Download/></button></div>:<span style={{fontSize:12,color:"#b8c8d8",flex:1}}>No exam results</span>}
-                <input ref={examRef} type="file" accept=".pdf,.doc,.docx,.xlsx,.png,.jpg" style={{display:"none"}} onChange={hExam}/><button style={S.btn("outline","sm")} onClick={()=>examRef.current?.click()}><I.Upload/>{mob?"":"Upload"}</button>
+                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{display:"none"}} onChange={hRes}/><button style={S.btn("outline","sm")} onClick={()=>fileRef.current?.click()}><I.Upload/>{mob?"":"Upload"}</button>
               </div>
             </div>
             {/* Stages */}
@@ -608,7 +561,7 @@ export default function App() {
   const AddModal=()=>{
     const [f,sF]=useState({name:"",email:"",role:roles[0]||"",source:"Website",recruiter:"Joela"});
     if(!showAdd)return null;
-    const add=()=>{if(!f.name||!f.email)return;const ini=f.name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);const j=jobs.find(x=>x.title===f.role);setCandidates(p=>[{id:Date.now(),name:f.name,email:f.email,role:f.role,stage:"Applied",rating:3,applied:"Mar 8, 2026",avatar:ini,tags:[],source:f.source,jobId:j?.id||1,recruiter:f.recruiter,notes:"",resumeName:"",talents:[],examResultName:""},...p]);setShowAdd(false);};
+    const add=()=>{if(!f.name||!f.email)return;const ini=f.name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);const j=jobs.find(x=>x.title===f.role);setCandidates(p=>[{id:Date.now(),name:f.name,email:f.email,role:f.role,stage:"Applied",rating:3,applied:"Mar 8, 2026",avatar:ini,tags:[],source:f.source,jobId:j?.id||1,recruiter:f.recruiter,notes:"",resumeName:""},...p]);setShowAdd(false);};
     return(
       <div style={S.modal} onClick={()=>setShowAdd(false)}>
         <div style={{...S.mBox,width:mob?"100%":460}} onClick={e=>e.stopPropagation()}>
@@ -651,7 +604,6 @@ export default function App() {
               <div><label style={S.lb}>Status</label><select style={S.fs} value={f.status} onChange={e=>sF({...f,status:e.target.value})}>{["Active","Closed"].map(t=><option key={t}>{t}</option>)}</select></div>
             </div>
             <div><label style={S.lb}>Description</label><textarea style={S.ta} rows={3} placeholder="Describe the role..." value={f.description||""} onChange={e=>sF({...f,description:e.target.value})}/></div>
-            <div><label style={S.lb}>Qualifications</label><textarea style={S.ta} rows={3} placeholder="List required qualifications..." value={f.qualifications||""} onChange={e=>sF({...f,qualifications:e.target.value})}/></div>
             <div style={{display:"flex",gap:10,marginTop:4,justifyContent:"space-between"}}>
               <div>{isEdit&&<button style={S.btn("danger","sm")} onClick={del}>Delete</button>}</div>
               <div style={{display:"flex",gap:10}}><button style={S.btn("outline")} onClick={()=>{setShowJobModal(false);setEditJob(null);}}>Cancel</button><button style={S.btn()} onClick={save}>{isEdit?"Save":"Post"}</button></div>
@@ -694,41 +646,6 @@ export default function App() {
         </div>
       </div>
       <CDrawer/><PDrawer/><AddModal/><JobModal/>
-      {/* Not Qualified Modal */}
-      {nqCandidate&&<div style={S.modal} onClick={()=>{setNqCandidate(null);setNqAction(null);setNqJob("");}}>
-        <div style={{...S.mBox,width:mob?"100%":440}} onClick={e=>e.stopPropagation()}>
-          <div style={{background:"linear-gradient(135deg,#BF360C,#FF6D00,#FFB74D)",padding:mob?"18px":"22px 24px",color:"#fff",position:"relative"}}>
-            <button onClick={()=>{setNqCandidate(null);setNqAction(null);setNqJob("");}} style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,.2)",border:"none",borderRadius:8,padding:5,cursor:"pointer",color:"#fff",display:"flex"}}><I.X/></button>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{...S.av(42),background:"rgba(255,255,255,.25)",fontSize:15}}>{nqCandidate.avatar}</div>
-              <div><h3 style={{margin:0,fontSize:16,fontWeight:700}}>Not Qualified</h3><p style={{margin:"2px 0 0",fontSize:13,opacity:.9}}>{nqCandidate.name} — {nqCandidate.role}</p></div>
-            </div>
-          </div>
-          <div style={{padding:mob?"16px 18px":"20px 24px"}}>
-            {!nqAction&&<>
-              <p style={{margin:"0 0 14px",fontSize:13,color:"#64748b"}}>This candidate will be tagged as Not Qualified. What would you like to do?</p>
-              <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                <button style={{...S.card,cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:16,border:"2px solid #E2EAF1",transition:"all .2s"}} onClick={()=>setNqAction("endorse")} onMouseEnter={e=>e.currentTarget.style.borderColor="#1F75B9"} onMouseLeave={e=>e.currentTarget.style.borderColor="#E2EAF1"}>
-                  <div style={{width:40,height:40,borderRadius:10,background:"#EDF5FC",display:"flex",alignItems:"center",justifyContent:"center",color:"#1F75B9",flexShrink:0}}><I.Endorse/></div>
-                  <div><div style={{fontWeight:700,fontSize:14,marginBottom:2}}>Endorse to Another Job</div><div style={{fontSize:12,color:"#94a3b8"}}>Move candidate to a different job opening</div></div>
-                </button>
-                <button style={{...S.card,cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:16,border:"2px solid #E2EAF1",transition:"all .2s"}} onClick={()=>{addCandidateToPool(nqCandidate);setNqCandidate(null);setNqAction(null);}} onMouseEnter={e=>e.currentTarget.style.borderColor="#8E24AA"} onMouseLeave={e=>e.currentTarget.style.borderColor="#E2EAF1"}>
-                  <div style={{width:40,height:40,borderRadius:10,background:"#F3E5F5",display:"flex",alignItems:"center",justifyContent:"center",color:"#8E24AA",flexShrink:0}}><I.Pool/></div>
-                  <div><div style={{fontWeight:700,fontSize:14,marginBottom:2}}>Add to Talent Pool</div><div style={{fontSize:12,color:"#94a3b8"}}>Save for future opportunities</div></div>
-                </button>
-              </div>
-            </>}
-            {nqAction==="endorse"&&<>
-              <p style={{margin:"0 0 10px",fontSize:13,color:"#64748b"}}>Select a job to endorse <strong>{nqCandidate.name}</strong> to:</p>
-              <select value={nqJob} onChange={e=>setNqJob(e.target.value)} style={{...S.fs,marginBottom:12}}><option value="">Select job opening...</option>{activeJobs.filter(j=>j.id!==nqCandidate.jobId).map(j=><option key={j.id} value={j.id}>{j.title} — {j.location}</option>)}</select>
-              <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-                <button style={S.btn("outline","sm")} onClick={()=>setNqAction(null)}>Back</button>
-                <button style={{...S.btn("primary","sm"),opacity:nqJob?1:.5}} disabled={!nqJob} onClick={()=>{if(nqJob){nqEndorse(nqCandidate,Number(nqJob));setNqCandidate(null);setNqAction(null);setNqJob("");}}}>Confirm Endorse</button>
-              </div>
-            </>}
-          </div>
-        </div>
-      </div>}
     </div>
   );
 }
