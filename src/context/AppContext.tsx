@@ -32,7 +32,6 @@ export interface AppState {
   nqAction: "endorse" | null;
   nqJob: string;
   fillTags: Record<number, FillTag | undefined>;
-  search: string;
   filterStage: string;
   filterRole: string;
 }
@@ -50,7 +49,6 @@ const initialState: AppState = {
   nqAction: null,
   nqJob: "",
   fillTags: {},
-  search: "",
   filterStage: "All",
   filterRole: "All",
 };
@@ -58,7 +56,6 @@ const initialState: AppState = {
 /* ─── Action Types ─── */
 
 export type AppAction =
-  | { type: "SET_SEARCH"; payload: string }
   | { type: "SET_FILTER_STAGE"; payload: string }
   | { type: "SET_FILTER_ROLE"; payload: string }
   | { type: "SELECT_CANDIDATE"; payload: Candidate | null }
@@ -98,8 +95,6 @@ function formatDate(): string {
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     /* ── UI State ── */
-    case "SET_SEARCH":
-      return { ...state, search: action.payload };
     case "SET_FILTER_STAGE":
       return { ...state, filterStage: action.payload };
     case "SET_FILTER_ROLE":

@@ -23,44 +23,62 @@ const NotQualifiedModal: FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-[rgba(15,30,50,0.45)] backdrop-blur-[4px]" style={mob ? { alignItems: "flex-end" } : {}} onClick={close}>
-      <div className={`${mob ? "w-full rounded-t-[18px]" : "w-[440px] rounded-[18px]"} max-h-[92vh] bg-white overflow-auto shadow-[var(--shadow-modal)]`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-100 flex items-center justify-center bg-[rgba(10,22,40,0.5)] backdrop-blur-[3px]"
+      style={mob ? { alignItems: "flex-end" } : {}}
+      onClick={close}
+    >
+      <div
+        className={`${mob ? "w-full rounded-t-[20px]" : "w-[460px] rounded-[20px]"} max-h-[90vh] bg-[var(--color-surface)] overflow-y-auto shadow-[var(--shadow-modal)]`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className={`bg-gradient-to-br from-[var(--color-nq-gradient-start)] via-[var(--color-nq-gradient-mid)] to-[var(--color-nq-gradient-end)] ${mob ? "px-4.5 py-4" : "px-6 py-5.5"} text-white relative`}>
-          <button onClick={close} className="absolute top-2.5 right-2.5 bg-white/20 border-none rounded-lg p-1.5 cursor-pointer text-white flex">
+        <div
+          className={`bg-gradient-to-br from-[var(--color-nq-gradient-start)] via-[var(--color-nq-gradient-mid)] to-[var(--color-nq-gradient-end)] ${
+            mob ? "px-5 py-5" : "px-6 py-6"
+          } text-white relative`}
+        >
+          <button
+            onClick={close}
+            className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 border-none rounded-[var(--radius-md)] p-1.5 cursor-pointer text-white flex transition-colors"
+          >
             <XIcon />
           </button>
-          <div className="flex items-center gap-3">
-            <Avatar initials={nqCandidate.avatar} size="md" className="!bg-white/25 !text-[15px]" />
+          <div className="flex items-center gap-3.5">
+            <Avatar initials={nqCandidate.avatar} size="md" className="!bg-white/25" />
             <div>
-              <h3 className="text-base font-bold">Not Qualified</h3>
-              <p className="mt-0.5 text-[13px] opacity-90">{nqCandidate.name} — {nqCandidate.role}</p>
+              <h3 className="text-[15px] font-bold">Not Qualified</h3>
+              <p className="mt-0.5 text-[13px] opacity-90">
+                {nqCandidate.name} — {nqCandidate.role}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className={`${mob ? "px-4.5 py-4" : "px-6 py-5"}`}>
+        <div className={`${mob ? "px-5 py-5" : "px-6 py-6"}`}>
           {/* Decision Screen */}
           {!nqAction && (
             <>
-              <p className="mb-3.5 text-[13px] text-[var(--color-text-subtle)]">
-                This candidate will be tagged as Not Qualified. What would you like to do?
+              <p className="mb-4 text-[13px] text-[var(--color-text-subtle)] leading-relaxed">
+                This candidate will be tagged as Not Qualified. What would you like to do next?
               </p>
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-3">
                 <button
-                  className="bg-white rounded-[var(--radius-lg)] border-2 border-[var(--color-surface-border)] p-4 flex items-center gap-3 cursor-pointer transition-all duration-200 text-left hover:border-[var(--color-primary)]"
+                  className="bg-[var(--color-surface-bg)] rounded-[var(--radius-lg)] border-2 border-[var(--color-surface-border)] p-4 flex items-center gap-3.5 cursor-pointer transition-all duration-200 text-left hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]"
                   onClick={() => dispatch({ type: "SET_NQ_ACTION", payload: "endorse" })}
                 >
                   <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-primary-light)] flex items-center justify-center text-[var(--color-primary)] shrink-0">
                     <EndorseIcon />
                   </div>
                   <div>
-                    <div className="font-bold text-sm mb-0.5">Endorse to Another Job</div>
-                    <div className="text-xs text-[var(--color-text-muted)]">Move candidate to a different job opening</div>
+                    <div className="font-bold text-[13.5px] mb-0.5">Endorse to Another Job</div>
+                    <div className="text-[12px] text-[var(--color-text-muted)]">
+                      Move candidate to a different job opening
+                    </div>
                   </div>
                 </button>
                 <button
-                  className="bg-white rounded-[var(--radius-lg)] border-2 border-[var(--color-surface-border)] p-4 flex items-center gap-3 cursor-pointer transition-all duration-200 text-left hover:border-[var(--color-purple)]"
+                  className="bg-[var(--color-surface-bg)] rounded-[var(--radius-lg)] border-2 border-[var(--color-surface-border)] p-4 flex items-center gap-3.5 cursor-pointer transition-all duration-200 text-left hover:border-[var(--color-purple)] hover:bg-[var(--color-purple-light)]"
                   onClick={() => {
                     dispatch({ type: "ADD_TO_POOL", payload: nqCandidate });
                     dispatch({ type: "SET_NQ_CANDIDATE", payload: null });
@@ -70,8 +88,10 @@ const NotQualifiedModal: FC = () => {
                     <PoolIcon />
                   </div>
                   <div>
-                    <div className="font-bold text-sm mb-0.5">Add to Talent Pool</div>
-                    <div className="text-xs text-[var(--color-text-muted)]">Save for future opportunities</div>
+                    <div className="font-bold text-[13.5px] mb-0.5">Add to Talent Pool</div>
+                    <div className="text-[12px] text-[var(--color-text-muted)]">
+                      Save for future opportunities
+                    </div>
                   </div>
                 </button>
               </div>
@@ -81,13 +101,13 @@ const NotQualifiedModal: FC = () => {
           {/* Endorse Screen */}
           {nqAction === "endorse" && (
             <>
-              <p className="mb-2.5 text-[13px] text-[var(--color-text-subtle)]">
+              <p className="mb-4 text-[13px] text-[var(--color-text-subtle)]">
                 Select a job to endorse <strong>{nqCandidate.name}</strong> to:
               </p>
               <select
                 value={nqJob}
                 onChange={(e) => dispatch({ type: "SET_NQ_JOB", payload: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-[var(--radius-md)] border-[1.5px] border-[var(--color-surface-muted)] text-[13.5px] outline-none font-[inherit] mb-3"
+                className="w-full px-3.5 py-2.5 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[13.5px] text-[var(--color-text-primary)] outline-none font-[inherit] mb-4 focus:border-[var(--color-primary)]"
               >
                 <option value="">Select job opening...</option>
                 {activeJobs
@@ -98,19 +118,22 @@ const NotQualifiedModal: FC = () => {
                     </option>
                   ))}
               </select>
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2.5 justify-end">
                 <button
-                  className="border-[1.5px] border-[var(--color-surface-muted)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-3 py-1 text-xs font-semibold bg-transparent cursor-pointer"
+                  className="border border-[var(--color-surface-muted)] text-[var(--color-text-subtle)] rounded-[var(--radius-md)] px-4 py-2 text-[13px] font-semibold bg-transparent cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors"
                   onClick={() => dispatch({ type: "SET_NQ_ACTION", payload: null })}
                 >
                   Back
                 </button>
                 <button
-                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-3 py-1 text-xs font-semibold shadow-[var(--shadow-btn)] cursor-pointer disabled:opacity-50"
+                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-4 py-2 text-[13px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer disabled:opacity-50 hover:bg-[var(--color-primary-hover)] transition-colors"
                   disabled={!nqJob}
                   onClick={() => {
                     if (nqJob) {
-                      dispatch({ type: "NQ_ENDORSE", payload: { candidate: nqCandidate, jobId: Number(nqJob) } });
+                      dispatch({
+                        type: "NQ_ENDORSE",
+                        payload: { candidate: nqCandidate, jobId: Number(nqJob) },
+                      });
                     }
                   }}
                 >
