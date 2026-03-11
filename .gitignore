@@ -35,8 +35,11 @@ npm-debug.log*
 backend/venv/
 backend/__pycache__/
 backend/**/__pycache__/
-backend/*.pyc
+backend/**/*.pyc
 backend/db.sqlite3
 backend/.env
+backend/local_settings.py
 backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
 
