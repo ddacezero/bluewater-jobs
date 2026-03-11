@@ -14,6 +14,7 @@ import {
 } from "./components/icons";
 import Avatar from "./components/Avatar";
 import ScrollToTopButton from "./components/ScrollToTopButton";
+import ProfileMenu from "./components/ProfileMenu";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -58,69 +59,101 @@ interface SideContentProps {
   onCollapse?: () => void;
 }
 
-// NOTE: SideContent is NOT wrapped in any collapse handler.
-// Only the dedicated collapse button (ChevIcon) triggers setCollapsed.
-const SideContent: FC<SideContentProps> = ({ onClose, onCollapse }) => (
-  <>
-    <div className="px-5 py-4 flex items-center gap-3 border-b border-[var(--color-surface-border)]">
-      <div className="w-9 h-9 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-gradient-end)] flex items-center justify-center text-white font-extrabold text-sm shrink-0">
-        BW
-      </div>
-      <div className="flex flex-col leading-tight min-w-0">
-        <span className="font-extrabold text-[15px] text-[var(--color-text-heading)] truncate">
-          Bluewater Resorts
-        </span>
-        <span className="text-[10.5px] text-[var(--color-text-secondary)] font-medium">Jobs Portal</span>
-      </div>
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="ml-auto bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] flex shrink-0"
-        >
-          <XIcon />
-        </button>
-      )}
-      {onCollapse && (
-        <button
-          onClick={onCollapse}
-          title="Collapse sidebar"
-          className="ml-auto shrink-0 w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-bg)] hover:text-[var(--color-primary)] bg-transparent border-none cursor-pointer transition-colors duration-150"
-        >
-          <ChevIcon style={{ transform: "rotate(180deg)" }} />
-        </button>
-      )}
-    </div>
+const SideContent: FC<SideContentProps> = ({ onClose, onCollapse }) => {
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
-    <nav className="py-3 flex-1 overflow-y-auto">
-      {NAV_ITEMS.map((n) => (
-        <NavLink
-          key={n.path}
-          to={n.path}
-          end={n.path === "/"}
-          onClick={onClose}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-4 py-2.5 mx-3 my-0.5 rounded-[var(--radius-md)] cursor-pointer text-[13.5px] no-underline transition-all duration-200 ${
-              isActive
-                ? "font-semibold bg-[var(--color-primary-light)] text-[var(--color-primary)]"
-                : "font-medium text-[var(--color-text-subtle)] hover:bg-[var(--color-surface-bg)] hover:text-[var(--color-text-heading)]"
-            }`
-          }
-        >
-          {n.icon}
-          <span>{n.label}</span>
-        </NavLink>
-      ))}
-    </nav>
+  // Close profile menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-    <div className="px-4 py-3.5 border-t border-[var(--color-surface-border)] flex items-center gap-2.5">
-      <Avatar initials="AD" size="sm" />
-      <div className="min-w-0">
-        <div className="font-semibold text-[12.5px]">Admin</div>
-        <div className="text-[10.5px] text-[var(--color-text-muted)]">HR Manager</div>
+  return (
+    <>
+      {/* Header */}
+      <div className="px-5 py-4 flex items-center gap-3 border-b border-[var(--color-surface-border)]">
+        <div className="w-9 h-9 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-gradient-end)] flex items-center justify-center text-white font-extrabold text-sm shrink-0">
+          BW
+        </div>
+        <div className="flex flex-col leading-tight min-w-0">
+          <span className="font-extrabold text-[15px] text-[var(--color-text-heading)] truncate">
+            Bluewater Resorts
+          </span>
+          <span className="text-[10.5px] text-[var(--color-text-secondary)] font-medium">Jobs Portal</span>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ml-auto bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] flex shrink-0"
+          >
+            <XIcon />
+          </button>
+        )}
+        {onCollapse && (
+          <button
+            onClick={onCollapse}
+            title="Collapse sidebar"
+            className="ml-auto shrink-0 w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-bg)] hover:text-[var(--color-primary)] bg-transparent border-none cursor-pointer transition-colors duration-150"
+          >
+            <ChevIcon style={{ transform: "rotate(180deg)" }} />
+          </button>
+        )}
       </div>
-    </div>
-  </>
-);
+
+      {/* Nav */}
+      <nav className="py-3 flex-1 overflow-y-auto">
+        {NAV_ITEMS.map((n) => (
+          <NavLink
+            key={n.path}
+            to={n.path}
+            end={n.path === "/"}
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2.5 mx-3 my-0.5 rounded-[var(--radius-md)] cursor-pointer text-[13.5px] no-underline transition-all duration-200 ${
+                isActive
+                  ? "font-semibold bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                  : "font-medium text-[var(--color-text-subtle)] hover:bg-[var(--color-surface-bg)] hover:text-[var(--color-text-heading)]"
+              }`
+            }
+          >
+            {n.icon}
+            <span>{n.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Profile card — popup anchor */}
+      <div
+        ref={profileRef}
+        className="relative px-4 py-3.5 border-t border-[var(--color-surface-border)]"
+      >
+        {profileOpen && (
+          <ProfileMenu
+            onClose={() => setProfileOpen(false)}
+            onNavigate={onClose}
+            // onLogout intentionally omitted — wire to auth API in next implementation
+          />
+        )}
+        <button
+          onClick={() => setProfileOpen((v) => !v)}
+          className="w-full flex items-center gap-2.5 rounded-[var(--radius-md)] hover:bg-[var(--color-surface-bg)] transition-colors p-1 -m-1 cursor-pointer bg-transparent border-none"
+        >
+          <Avatar initials="AD" size="sm" />
+          <div className="min-w-0 text-left">
+            <div className="font-semibold text-[12.5px] text-[var(--color-text-heading)]">Admin</div>
+            <div className="text-[10.5px] text-[var(--color-text-muted)]">HR Manager</div>
+          </div>
+        </button>
+      </div>
+    </>
+  );
+};
 
 /* ─── Layout Shell ─── */
 
@@ -305,6 +338,8 @@ const App: FC = () => (
           <Route path="jobs" element={<Jobs />} />
           <Route path="reports" element={<Reports />} />
           <Route path="pool" element={<TalentPool />} />
+          <Route path="profile" element={<div className="p-8 text-[var(--color-text-heading)] font-semibold text-lg">Profile — coming soon</div>} />
+          <Route path="settings" element={<div className="p-8 text-[var(--color-text-heading)] font-semibold text-lg">Settings — coming soon</div>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
