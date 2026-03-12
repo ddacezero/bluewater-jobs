@@ -4,10 +4,12 @@
  */
 
 import { useState, useRef, useEffect, type FC } from "react";
-import { Routes, Route, NavLink, Outlet, Navigate } from "react-router-dom";
+import { Routes, Route, NavLink, Outlet, Navigate, useNavigate } from "react-router-dom";
 import { AppProvider } from "./context/AppContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { useMobile } from "./hooks/useMediaQuery";
+import ProtectedRoute from "./components/ProtectedRoute";
 import {
   DashIcon, PeopleIcon, BagIcon, PipeIcon, ChartIcon, PoolIcon,
   BellIcon, MenuIcon, XIcon, ChevIcon, SunIcon, MoonIcon,
@@ -23,6 +25,8 @@ import Pipeline from "./pages/Pipeline";
 import Jobs from "./pages/Jobs";
 import Reports from "./pages/Reports";
 import TalentPool from "./pages/TalentPool";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 // Modals
 import CandidateDrawer from "./modals/CandidateDrawer";
@@ -34,7 +38,7 @@ import NotQualifiedModal from "./modals/NotQualifiedModal";
 /* ─── Navigation Items ─── */
 
 const NAV_ITEMS = [
-  { path: "/", label: "Dashboard", icon: <DashIcon /> },
+  { path: "/dashboard", label: "Dashboard", icon: <DashIcon /> },
   { path: "/candidates", label: "Candidates", icon: <PeopleIcon /> },
   { path: "/pipeline", label: "Pipeline", icon: <PipeIcon /> },
   { path: "/jobs", label: "Jobs", icon: <BagIcon /> },
@@ -62,6 +66,13 @@ interface SideContentProps {
 const SideContent: FC<SideContentProps> = ({ onClose, onCollapse }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/", { replace: true });
+  };
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -137,17 +148,24 @@ const SideContent: FC<SideContentProps> = ({ onClose, onCollapse }) => {
           <ProfileMenu
             onClose={() => setProfileOpen(false)}
             onNavigate={onClose}
-            // onLogout intentionally omitted — wire to auth API in next implementation
+            onLogout={handleLogout}
           />
         )}
         <button
           onClick={() => setProfileOpen((v) => !v)}
           className="w-full flex items-center gap-2.5 rounded-[var(--radius-md)] hover:bg-[var(--color-surface-bg)] transition-colors p-1 -m-1 cursor-pointer bg-transparent border-none"
         >
-          <Avatar initials="AD" size="sm" />
+          <Avatar
+            initials={user ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase() : "?"}
+            size="sm"
+          />
           <div className="min-w-0 text-left">
-            <div className="font-semibold text-[12.5px] text-[var(--color-text-heading)]">Admin</div>
-            <div className="text-[10.5px] text-[var(--color-text-muted)]">HR Manager</div>
+            <div className="font-semibold text-[12.5px] text-[var(--color-text-heading)] truncate">
+              {user ? `${user.first_name} ${user.last_name}` : "—"}
+            </div>
+            <div className="text-[10.5px] text-[var(--color-text-muted)] truncate">
+              {user?.role?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? ""}
+            </div>
           </div>
         </button>
       </div>
@@ -329,21 +347,34 @@ const Layout: FC = () => {
 
 const App: FC = () => (
   <ThemeProvider>
-    <AppProvider>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="candidates" element={<Candidates />} />
-          <Route path="pipeline" element={<Pipeline />} />
-          <Route path="jobs" element={<Jobs />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="pool" element={<TalentPool />} />
-          <Route path="profile" element={<div className="p-8 text-[var(--color-text-heading)] font-semibold text-lg">Profile — coming soon</div>} />
-          <Route path="settings" element={<div className="p-8 text-[var(--color-text-heading)] font-semibold text-lg">Settings — coming soon</div>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <Routes>
+          {/* Public routes — no sidebar/topbar */}
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Protected routes — full layout shell */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="candidates" element={<Candidates />} />
+            <Route path="pipeline" element={<Pipeline />} />
+            <Route path="jobs" element={<Jobs />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="pool" element={<TalentPool />} />
+            <Route path="profile" element={<div className="p-8 text-[var(--color-text-heading)] font-semibold text-lg">Profile — coming soon</div>} />
+            <Route path="settings" element={<div className="p-8 text-[var(--color-text-heading)] font-semibold text-lg">Settings — coming soon</div>} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+        </Routes>
+      </AppProvider>
+    </AuthProvider>
   </ThemeProvider>
 );
 
