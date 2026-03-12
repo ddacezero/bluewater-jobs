@@ -2,7 +2,9 @@
 node_modules/
 
 # Build output
+build/
 dist/
+*.egg-info/
 
 # Environment
 .env
@@ -43,3 +45,18 @@ backend/.pytest_cache/
 backend/.coverage
 backend/htmlcov/
 
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environment
+venv/
+ENV/
+env/
+
+# SQLite3
+*.sqlite3
+
+# ENVRC
+.envrc
