@@ -2,7 +2,9 @@
 node_modules/
 
 # Build output
+build/
 dist/
+*.egg-info/
 
 # Environment
 .env
@@ -26,3 +28,35 @@ npm-debug.log*
 
 # Vercel
 .vercel
+
+# Claude
+.claude
+.superpowers
+
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/db.sqlite3
+backend/.env
+backend/local_settings.py
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environment
+venv/
+ENV/
+env/
+
+# SQLite3
+*.sqlite3
+
+# ENVRC
+.envrc
