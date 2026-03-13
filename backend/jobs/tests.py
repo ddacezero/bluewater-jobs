@@ -60,3 +60,35 @@ class SignalTest(TestCase):
         app.name = "Ana Reyes Updated"
         app.save()
         self.assertEqual(Candidate.objects.filter(application=app).count(), 1)
+
+
+from jobs.serializers import CandidateSerializer
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class CandidateSerializerTest(TestCase):
+    def test_serializer_contains_expected_fields(self):
+        job = make_job()
+        app = JobApplication.objects.create(
+            job=job, name="Ana Reyes", email="ana@test.com",
+            phone_number="09171234567", resume=make_resume(),
+            expected_salary="25000.00", agreement=True, source="Website",
+        )
+        c = Candidate.objects.get(application=app)
+        data = CandidateSerializer(c, context={"request": None}).data
+        self.assertIn("id", data)
+        self.assertIn("stage", data)
+        self.assertIn("rating", data)
+        self.assertIn("recruiter", data)
+        self.assertIn("application", data)
+        self.assertIn("job", data)
+        self.assertIn("is_pooled", data)
+        self.assertIn("pooled_at", data)
+        # application nested fields
+        self.assertIn("name", data["application"])
+        self.assertIn("email", data["application"])
+        self.assertNotIn("cover_letter", data["application"])
+        self.assertNotIn("agreement", data["application"])
+        # job nested fields
+        self.assertIn("title", data["job"])
+        self.assertIn("location", data["job"])
