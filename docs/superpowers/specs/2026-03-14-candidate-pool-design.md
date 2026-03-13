@@ -31,6 +31,8 @@ class Candidate(models.Model):
 
     application   = models.OneToOneField(JobApplication, on_delete=models.CASCADE, related_name="candidate")
     job           = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="candidates")
+    # `job` is a deliberate denormalization of `application.job` to allow direct
+    # filtering (e.g. Candidate.objects.filter(job=x)) without joining through application.
     recruiter     = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     stage         = models.CharField(max_length=50, choices=STAGE_CHOICES, default="Applied")
     rating        = models.IntegerField(default=0)  # 0 = unrated, 1–5 stars
@@ -48,9 +50,28 @@ class Candidate(models.Model):
 
 ### Auto-Creation Signal
 
-A `post_save` signal on `JobApplication` automatically creates a `Candidate` record when a new application is submitted:
+The signal lives in `jobs/signals.py` and is registered via the `ready()` hook in `jobs/apps.py`:
+
+Add a `ready()` hook to the existing `jobs/apps.py`:
 
 ```python
+# jobs/apps.py
+class JobsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "jobs"
+
+    def ready(self):
+        import jobs.signals  # noqa: F401
+```
+
+No change to `INSTALLED_APPS` is needed — Django auto-selects the sole `AppConfig` subclass (`JobsConfig`) found in `jobs/apps.py`. If a second subclass is ever added to `jobs/apps.py`, `INSTALLED_APPS` must be updated to the explicit path `"jobs.apps.JobsConfig"` to prevent silent signal loss.
+
+```python
+# jobs/signals.py
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .models import JobApplication, Candidate
+
 @receiver(post_save, sender=JobApplication)
 def create_candidate(sender, instance, created, **kwargs):
     if created:
@@ -65,6 +86,19 @@ This ensures every applicant lands in the "Applied" column of the Pipeline with 
 ### Pool Toggle Behavior
 
 When `PATCH /api/candidates/{id}/` sets `is_pooled: true`, the backend automatically sets `pooled_at` to the current timestamp. When `is_pooled` is set back to `false`, `pooled_at` is cleared. No separate `PoolCandidate` model is needed.
+
+This logic lives in `perform_update` on the `CandidateViewSet`:
+
+```python
+def perform_update(self, serializer):
+    is_pooled = serializer.validated_data.get("is_pooled", serializer.instance.is_pooled)
+    pooled_at = serializer.instance.pooled_at
+    if is_pooled and not serializer.instance.is_pooled:
+        pooled_at = timezone.now()
+    elif not is_pooled:
+        pooled_at = None
+    serializer.save(pooled_at=pooled_at)
+```
 
 ### Default Field Values
 
@@ -94,7 +128,23 @@ PATCH  /api/candidates/{id}/             → update stage, recruiter, rating, no
 DELETE /api/candidates/{id}/             → delete candidate (role-gated)
 ```
 
+**Permissions:** A new `CandidatePermission` class is added to `jobs/permissions.py`, following the same pattern as `JobPermission`:
+- Safe methods (`GET`): any authenticated user
+- `PATCH`: any authenticated user
+- `DELETE`: `hr_manager` and `talent_acquisition_manager` only
+
+**URL Registration:** A new file `jobs/urls_candidates.py` is created for these routes and mounted in `config/urls.py`:
+
+```python
+# config/urls.py
+path("api/candidates/", include("jobs.urls_candidates")),
+```
+
 ### Serializer Response Shape
+
+The `recruiter` nested object uses `get_full_name()` from Django's `AbstractUser` (i.e., `first_name + " " + last_name`). The `RecruiterSerializer` maps this to `"name"` via a `SerializerMethodField`.
+
+The `application` nested object uses a new trimmed `ApplicationNestedSerializer` (not the existing `JobApplicationSerializer`) that exposes only: `id`, `name`, `email`, `phone_number`, `resume`, `expected_salary`, `source`, `created_at`. The fields `cover_letter` and `agreement` are intentionally excluded.
 
 ```json
 {
@@ -126,6 +176,11 @@ DELETE /api/candidates/{id}/             → delete candidate (role-gated)
 }
 ```
 
+The nested job object is serialized by a new `JobTrimmedSerializer` exposing only `id`, `title`, and `location`. The `location` field serializes to the raw choice key (e.g. `"Bluewater Maribago"`), which is acceptable here because the choice keys and display labels are identical. If keys ever diverge from labels, this field will need `get_location_display()`.
+
+```
+```
+
 ---
 
 ## 3. Frontend Changes
@@ -146,9 +201,17 @@ deleteCandidate(id)       → DELETE /api/candidates/{id}/
 - Remove `PoolCandidate` state and all pool-related actions
 - Talent pool is now derived: `candidates.filter(c => c.is_pooled)`
 - Replace seeded `Candidate` state with API-fetched data
+
+**Reducer cases to remove entirely** (they depend on the old `Candidate` shape and are no longer valid):
+- `ENDORSE_CANDIDATE`
+- `NQ_ENDORSE`
+- `MARK_NOT_QUALIFIED`
+- `ADD_CANDIDATE` (manual add — candidates come from applications now)
+
+**Reducer cases to update** (replace local state mutation with API call):
 - `MOVE_STAGE` → calls `updateCandidate(id, { stage })`
 - `ADD_TO_POOL` → calls `updateCandidate(id, { is_pooled: true })`
-- `REACTIVATE_POOL` → calls `updateCandidate(id, { is_pooled: false })`
+- `REACTIVATE_POOL` → calls `updateCandidate(id, { is_pooled: false })`; on success, dispatch `UPDATE_CANDIDATE` with `{ is_pooled: false, pooled_at: null }` to optimistically update local state (no re-fetch needed)
 
 ### Page & Component Updates
 
