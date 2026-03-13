@@ -1,12 +1,19 @@
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from .models import Job
-from .permissions import JobPermission
-from .serializers import JobApplicationSerializer, JobSerializer, PublicJobSerializer
+from .models import Candidate, Job, JobApplication
+from .permissions import CandidatePermission, JobPermission
+from .serializers import (
+    CandidateCreateSerializer,
+    CandidateSerializer,
+    JobApplicationSerializer,
+    JobSerializer,
+    PublicJobSerializer,
+)
 
 
 class JobListCreateView(generics.ListCreateAPIView):
@@ -70,3 +77,72 @@ class PublicJobApplyView(generics.CreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=201, headers=headers)
+
+
+class CandidateListCreateView(generics.ListCreateAPIView):
+    permission_classes = [CandidatePermission]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return CandidateCreateSerializer
+        return CandidateSerializer
+
+    def get_queryset(self):
+        qs = Candidate.objects.select_related(
+            "application", "job", "recruiter"
+        ).all()
+        job_id = self.request.query_params.get("job")
+        is_pooled = self.request.query_params.get("is_pooled")
+        if job_id:
+            qs = qs.filter(job_id=job_id)
+        if is_pooled == "true":
+            qs = qs.filter(is_pooled=True)
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        serializer = CandidateCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # Create the JobApplication — signal fires and creates Candidate
+        app = JobApplication.objects.create(
+            job=data["job"],
+            name=data["name"],
+            email=data["email"],
+            phone_number=data["phone_number"],
+            resume=data["resume"],
+            expected_salary=data["expected_salary"],
+            cover_letter=data.get("cover_letter", ""),
+            source=data["source"],
+            agreement=True,  # HR is submitting on behalf of the applicant
+        )
+
+        # Fetch the auto-created Candidate and optionally set recruiter
+        candidate = app.candidate
+        recruiter = data.get("recruiter")
+        if recruiter:
+            candidate.recruiter = recruiter
+            candidate.save(update_fields=["recruiter"])
+
+        out = CandidateSerializer(candidate, context={"request": request})
+        return Response(out.data, status=201)
+
+
+class CandidateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Candidate.objects.select_related("application", "job", "recruiter").all()
+    serializer_class = CandidateSerializer
+    permission_classes = [CandidatePermission]
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        is_pooled = serializer.validated_data.get("is_pooled", instance.is_pooled)
+        pooled_at = instance.pooled_at
+
+        if is_pooled and not instance.is_pooled:
+            pooled_at = timezone.now()
+        elif not is_pooled:
+            pooled_at = None
+
+        serializer.save(pooled_at=pooled_at)

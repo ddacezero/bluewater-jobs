@@ -129,3 +129,151 @@ class CandidatePermissionTest(TestCase):
         self.assertFalse(self.perm.has_permission(req, None))
         req = self._req("delete", "talent_acquisition_manager")
         self.assertTrue(self.perm.has_permission(req, None))
+
+
+import json
+from django.urls import reverse
+from rest_framework.test import APIClient
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class CandidateAPITest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.manager = make_user(email="mgr@test.com", role="hr_manager")
+        self.specialist = make_user(email="spec@test.com", role="talent_acquisition_specialist")
+        self.job = make_job()
+        # Create an application — signal auto-creates Candidate
+        self.app = JobApplication.objects.create(
+            job=self.job, name="Ana Reyes", email="ana@test.com",
+            phone_number="09171234567", resume=make_resume(),
+            expected_salary="25000.00", agreement=True, source="Website",
+        )
+        self.candidate = Candidate.objects.get(application=self.app)
+
+    def _auth(self, user):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        token = RefreshToken.for_user(user).access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+    # --- List ---
+
+    def test_list_requires_auth(self):
+        resp = self.client.get("/api/candidates/")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_list_returns_candidates(self):
+        self._auth(self.specialist)
+        resp = self.client.get("/api/candidates/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data), 1)
+
+    def test_filter_by_job(self):
+        self._auth(self.specialist)
+        resp = self.client.get(f"/api/candidates/?job={self.job.id}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data), 1)
+
+        other_job = make_job()
+        resp = self.client.get(f"/api/candidates/?job={other_job.id}")
+        self.assertEqual(len(resp.data), 0)
+
+    def test_filter_by_is_pooled(self):
+        self._auth(self.manager)
+        # Pool the candidate first
+        self.client.patch(
+            f"/api/candidates/{self.candidate.id}/",
+            {"is_pooled": True}, format="json"
+        )
+        resp = self.client.get("/api/candidates/?is_pooled=true")
+        self.assertEqual(len(resp.data), 1)
+
+    # --- Detail ---
+
+    def test_detail_returns_nested_data(self):
+        self._auth(self.specialist)
+        resp = self.client.get(f"/api/candidates/{self.candidate.id}/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["application"]["name"], "Ana Reyes")
+        self.assertEqual(resp.data["job"]["title"], "Chef")
+        self.assertEqual(resp.data["stage"], "Applied")
+
+    # --- Update ---
+
+    def test_patch_stage(self):
+        self._auth(self.specialist)
+        resp = self.client.patch(
+            f"/api/candidates/{self.candidate.id}/",
+            {"stage": "Screening"}, format="json"
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.candidate.refresh_from_db()
+        self.assertEqual(self.candidate.stage, "Screening")
+
+    def test_pool_toggle_sets_pooled_at(self):
+        self._auth(self.manager)
+        resp = self.client.patch(
+            f"/api/candidates/{self.candidate.id}/",
+            {"is_pooled": True}, format="json"
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.candidate.refresh_from_db()
+        self.assertTrue(self.candidate.is_pooled)
+        self.assertIsNotNone(self.candidate.pooled_at)
+
+    def test_pool_toggle_off_clears_pooled_at(self):
+        self._auth(self.manager)
+        self.client.patch(
+            f"/api/candidates/{self.candidate.id}/",
+            {"is_pooled": True}, format="json"
+        )
+        self.client.patch(
+            f"/api/candidates/{self.candidate.id}/",
+            {"is_pooled": False}, format="json"
+        )
+        self.candidate.refresh_from_db()
+        self.assertFalse(self.candidate.is_pooled)
+        self.assertIsNone(self.candidate.pooled_at)
+
+    # --- Create ---
+
+    def test_post_creates_candidate(self):
+        self._auth(self.manager)
+        resp = self.client.post("/api/candidates/", {
+            "name": "Pedro Cruz",
+            "email": "pedro@test.com",
+            "phone_number": "09179999999",
+            "resume": make_resume(),
+            "expected_salary": "30000",
+            "source": "LinkedIn",
+            "job_id": self.job.id,
+        }, format="multipart")
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.data["application"]["name"], "Pedro Cruz")
+        self.assertEqual(resp.data["stage"], "Applied")
+
+    def test_post_restricted_to_manager_roles(self):
+        self._auth(self.specialist)
+        resp = self.client.post("/api/candidates/", {
+            "name": "Pedro Cruz",
+            "email": "pedro@test.com",
+            "phone_number": "09179999999",
+            "resume": make_resume(),
+            "expected_salary": "30000",
+            "source": "LinkedIn",
+            "job_id": self.job.id,
+        }, format="multipart")
+        self.assertEqual(resp.status_code, 403)
+
+    # --- Delete ---
+
+    def test_delete_restricted_to_manager_roles(self):
+        self._auth(self.specialist)
+        resp = self.client.delete(f"/api/candidates/{self.candidate.id}/")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_delete_allowed_for_manager(self):
+        self._auth(self.manager)
+        resp = self.client.delete(f"/api/candidates/{self.candidate.id}/")
+        self.assertEqual(resp.status_code, 204)
+        self.assertFalse(Candidate.objects.filter(id=self.candidate.id).exists())
