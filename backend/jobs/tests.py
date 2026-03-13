@@ -265,6 +265,18 @@ class CandidateAPITest(TestCase):
         }, format="multipart")
         self.assertEqual(resp.status_code, 403)
 
+    def test_post_requires_auth(self):
+        resp = self.client.post("/api/candidates/", {
+            "name": "Pedro Cruz",
+            "email": "pedro@test.com",
+            "phone_number": "09179999999",
+            "resume": make_resume(),
+            "expected_salary": "30000",
+            "source": "LinkedIn",
+            "job_id": self.job.id,
+        }, format="multipart")
+        self.assertEqual(resp.status_code, 401)
+
     # --- Delete ---
 
     def test_delete_restricted_to_manager_roles(self):

@@ -101,7 +101,7 @@ class CandidateListCreateView(generics.ListCreateAPIView):
         return qs
 
     def create(self, request, *args, **kwargs):
-        serializer = CandidateCreateSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -118,8 +118,14 @@ class CandidateListCreateView(generics.ListCreateAPIView):
             agreement=True,  # HR is submitting on behalf of the applicant
         )
 
-        # Fetch the auto-created Candidate and optionally set recruiter
-        candidate = app.candidate
+        # Fetch the auto-created Candidate (created by post_save signal)
+        try:
+            candidate = app.candidate
+        except Candidate.DoesNotExist:
+            return Response(
+                {"detail": "Candidate record could not be created."},
+                status=500,
+            )
         recruiter = data.get("recruiter")
         if recruiter:
             candidate.recruiter = recruiter
