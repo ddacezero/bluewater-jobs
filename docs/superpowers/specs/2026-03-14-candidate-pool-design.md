@@ -124,12 +124,14 @@ GET    /api/candidates/                  → list all candidates
 GET    /api/candidates/?job={id}         → pipeline view for a specific job
 GET    /api/candidates/?is_pooled=true   → talent pool view
 GET    /api/candidates/{id}/             → candidate detail
+POST   /api/candidates/                  → manually create a candidate (HR-only, internal)
 PATCH  /api/candidates/{id}/             → update stage, recruiter, rating, notes, exam_result, is_pooled
 DELETE /api/candidates/{id}/             → delete candidate (role-gated)
 ```
 
 **Permissions:** A new `CandidatePermission` class is added to `jobs/permissions.py`, following the same pattern as `JobPermission`:
 - Safe methods (`GET`): any authenticated user
+- `POST`: `hr_manager` and `talent_acquisition_manager` only
 - `PATCH`: any authenticated user
 - `DELETE`: `hr_manager` and `talent_acquisition_manager` only
 
@@ -190,10 +192,11 @@ The nested job object is serialized by a new `JobTrimmedSerializer` exposing onl
 **File:** `frontend/src/api/candidates.ts`
 
 ```
-listCandidates(params?)   → GET /api/candidates/
-getCandidate(id)          → GET /api/candidates/{id}/
-updateCandidate(id, data) → PATCH /api/candidates/{id}/
-deleteCandidate(id)       → DELETE /api/candidates/{id}/
+listCandidates(params?)      → GET /api/candidates/
+getCandidate(id)             → GET /api/candidates/{id}/
+createCandidate(formData)    → POST /api/candidates/   (multipart, for manual HR add)
+updateCandidate(id, data)    → PATCH /api/candidates/{id}/
+deleteCandidate(id)          → DELETE /api/candidates/{id}/
 ```
 
 ### AppContext Changes
@@ -206,9 +209,9 @@ deleteCandidate(id)       → DELETE /api/candidates/{id}/
 - `ENDORSE_CANDIDATE`
 - `NQ_ENDORSE`
 - `MARK_NOT_QUALIFIED`
-- `ADD_CANDIDATE` (manual add — candidates come from applications now)
 
 **Reducer cases to update** (replace local state mutation with API call):
+- `ADD_CANDIDATE` → calls `createCandidate(formData)`; on success, appends the returned `Candidate` to state
 - `MOVE_STAGE` → calls `updateCandidate(id, { stage })`
 - `ADD_TO_POOL` → calls `updateCandidate(id, { is_pooled: true })`
 - `REACTIVATE_POOL` → calls `updateCandidate(id, { is_pooled: false })`; on success, dispatch `UPDATE_CANDIDATE` with `{ is_pooled: false, pooled_at: null }` to optimistically update local state (no re-fetch needed)
@@ -218,13 +221,35 @@ deleteCandidate(id)       → DELETE /api/candidates/{id}/
 | Component | Change |
 |---|---|
 | `Pipeline.tsx` | Fetch from `GET /api/candidates/?job={id}`, replace seeded data |
-| `Candidates.tsx` | Fetch from `GET /api/candidates/`, replace seeded data; remove "Add Candidate" button |
+| `Candidates.tsx` | Fetch from `GET /api/candidates/`, replace seeded data; retain "Add Candidate" button |
 | `TalentPool.tsx` | Fetch from `GET /api/candidates/?is_pooled=true`; drop `PoolCandidate` type |
 | `CandidateDrawer.tsx` | Wire `PATCH` calls for notes, rating, recruiter, stage edits |
-| `Dashboard.tsx` | Remove "Add Candidate" button |
-| `AddCandidateModal.tsx` | Delete entirely |
+| `Dashboard.tsx` | Retain "Add Candidate" button |
+| `AddCandidateModal.tsx` | Redesign with new fields (see below); wire to `POST /api/candidates/` |
 | `seeds.ts` | Remove seeded candidates and pool candidates |
 | `types.ts` | Remove `PoolCandidate` type; update `Candidate` to match API shape |
+
+### AddCandidateModal — Redesigned Fields
+
+The modal mirrors the public application portal fields, with HR-specific additions. It submits as `multipart/form-data` to `POST /api/candidates/`.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| Full Name | text input | Yes | Maps to `JobApplication.name` |
+| Email | email input | Yes | Maps to `JobApplication.email` |
+| Phone Number | text input | Yes | Maps to `JobApplication.phone_number` |
+| Resume | file upload | Yes | Maps to `JobApplication.resume` |
+| Expected Salary | number input | Yes | Maps to `JobApplication.expected_salary` |
+| Cover Letter | textarea | No | Maps to `JobApplication.cover_letter` |
+| Role | dropdown | Yes | Populated from `GET /api/jobs/` (active jobs); value = `job.id`; maps to `Candidate.job` |
+| Recruiter | dropdown | No | Populated from `GET /api/users/` (HR users); value = `user.id`; maps to `Candidate.recruiter` |
+| Source | dropdown | Yes | Choices: Website, LinkedIn, Indeed, Referral, Endorsed, Other; maps to `JobApplication.source` |
+
+**Backend handling of `POST /api/candidates/`:**
+The view creates a `JobApplication` from the provided fields (with `agreement=True` since HR is submitting on behalf of the applicant), then the `post_save` signal fires and creates the `Candidate`. The recruiter is then set on the `Candidate` immediately after creation if provided. The response returns the fully serialized `Candidate`.
+
+**`GET /api/users/` for recruiter dropdown:**
+A new lightweight endpoint `GET /api/users/` (authenticated, returns `id` + `get_full_name()` for all users) is added to the `core` app to populate the recruiter dropdown.
 
 ### Updated `Candidate` Type
 
@@ -263,7 +288,7 @@ export interface Candidate {
 ## 4. Out of Scope (Deferred)
 
 - Exam result file management UI (upload/preview/delete in drawer)
-- Direct/walk-in candidate creation (no application form)
+- Walk-in candidate creation is now in scope via `AddCandidateModal` (see Section 3)
 - Candidate activity log / audit trail
 - Email notifications to applicants on stage changes
 - Application status tracking beyond pipeline stage
