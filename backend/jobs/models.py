@@ -42,3 +42,31 @@ class Job(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+def applicant_resume_upload_to(instance, filename: str) -> str:
+    return f"applications/job-{instance.job_id}/{filename}"
+
+
+class JobApplication(models.Model):
+    SOURCE_CHOICES = [
+        ("Website", "Website"),
+    ]
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="applications")
+    source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default="Website")
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=50)
+    resume = models.FileField(upload_to=applicant_resume_upload_to)
+    expected_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    cover_letter = models.TextField(blank=True, default="")
+    agreement = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "job_applications"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.name} - {self.job.title}"

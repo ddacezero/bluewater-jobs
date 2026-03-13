@@ -28,6 +28,7 @@ import Reports from "./pages/Reports";
 import TalentPool from "./pages/TalentPool";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Careers from "./pages/Careers";
 
 // Modals
 import CandidateDrawer from "./modals/CandidateDrawer";
@@ -355,6 +356,7 @@ const App: FC = () => (
           {/* Public routes — no sidebar/topbar */}
           <Route path="/" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/careers" element={<Careers />} />
 
           {/* Protected routes — full layout shell */}
           <Route
