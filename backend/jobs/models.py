@@ -35,7 +35,7 @@ class Job(models.Model):
     posted = models.CharField(max_length=50)
     closed = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, default="")
-    qualifications = models.TextField(blank=True, null=True)
+    qualifications = models.TextField(blank=True, default="")
 
     class Meta:
         db_table = "jobs"
@@ -105,7 +105,7 @@ class Candidate(models.Model):
     rating = models.IntegerField(default=0)
     notes = models.TextField(blank=True, default="")
     exam_result = models.FileField(upload_to="exam-results/", null=True, blank=True)
-    endorsed_from = models.CharField(max_length=200, blank=True, null=True)
+    endorsed_from = models.CharField(max_length=200, blank=True, default="")
     is_pooled = models.BooleanField(default=False)
     pooled_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,8 +1,6 @@
 import tempfile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
-from rest_framework.test import APIClient
-
 from core.models import User
 from jobs.models import Candidate, Job, JobApplication
 

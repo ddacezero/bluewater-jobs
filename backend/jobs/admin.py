@@ -16,6 +16,10 @@ class JobApplicationAdmin(admin.ModelAdmin):
 
 @admin.register(Candidate)
 class CandidateAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "stage", "rating", "recruiter", "is_pooled", "created_at")
+    @admin.display(description="Candidate")
+    def candidate_name(self, obj):
+        return str(obj)
+
+    list_display = ("candidate_name", "stage", "rating", "recruiter", "is_pooled", "created_at")
     list_filter = ("stage", "is_pooled", "job")
     raw_id_fields = ("application", "job", "recruiter")
