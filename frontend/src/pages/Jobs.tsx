@@ -5,14 +5,23 @@
 
 import type { FC } from "react";
 import { useApp } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { PlusIcon, EditIcon, LocIcon, ListCheckIcon } from "../components/icons";
 
 const Jobs: FC = () => {
   const { state, dispatch } = useApp();
+  const { user } = useAuth();
   const mob = useMobile();
 
   const { candidates, jobs } = state;
+  const canCreate =
+    user?.role === "hr_manager" || user?.role === "talent_acquisition_manager";
+
+  const openJobModal = (job: (typeof jobs)[number] | null) => {
+    dispatch({ type: "SET_EDIT_JOB", payload: job });
+    dispatch({ type: "SET_SHOW_JOB_MODAL", payload: true });
+  };
 
   return (
     <div className="animate-fade-in">
@@ -23,29 +32,32 @@ const Jobs: FC = () => {
           </h1>
           <p className="text-[var(--color-text-secondary)] mt-1 text-[13px]">{jobs.length} positions</p>
         </div>
-        <button
-          className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold inline-flex items-center gap-1.5 shadow-[var(--shadow-btn)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-primary-hover)] active:scale-[0.98]"
-          onClick={() => {
-            dispatch({ type: "SET_EDIT_JOB", payload: null });
-            dispatch({ type: "SET_SHOW_JOB_MODAL", payload: true });
-          }}
-        >
-          <PlusIcon />
-          {mob ? "New" : "Post New Job"}
-        </button>
+        {canCreate && (
+          <button
+            className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold inline-flex items-center gap-1.5 shadow-[var(--shadow-btn)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-primary-hover)] active:scale-[0.98]"
+            onClick={() => {
+              openJobModal(null);
+            }}
+          >
+            <PlusIcon />
+            {mob ? "New" : "Post New Job"}
+          </button>
+        )}
       </div>
 
       <div className={`grid ${mob ? "grid-cols-1" : "grid-cols-2"} gap-5`}>
         {jobs.map((j) => {
-          const jc = candidates.filter((c) => c.jobId === j.id);
+          // API jobs have no seeded candidates linked to them — count is always 0
+          // until candidates are also persisted to the backend.
+          const jc =
+            j.source !== "api"
+              ? candidates.filter((c) => c.jobId === j.id)
+              : [];
           return (
             <div
-              key={j.id}
+              key={`${j.source ?? "local"}-${j.id}`}
               className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] p-6 shadow-[var(--shadow-card)] cursor-pointer relative overflow-hidden transition-all duration-200 hover:shadow-[var(--shadow-card-hover)]"
-              onClick={() => {
-                dispatch({ type: "SET_EDIT_JOB", payload: j });
-                dispatch({ type: "SET_SHOW_JOB_MODAL", payload: true });
-              }}
+              onClick={() => openJobModal(j)}
             >
               {j.status === "Closed" && (
                 <div className="absolute top-0 right-0 bg-[var(--color-danger-bg)] text-[var(--color-danger-dark)] px-3 py-1 text-[10px] font-bold rounded-bl-[10px]">
@@ -64,8 +76,7 @@ const Jobs: FC = () => {
                     className="border border-[var(--color-surface-muted)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-3 py-1.5 text-[11px] font-semibold inline-flex items-center gap-1 bg-transparent cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      dispatch({ type: "SET_EDIT_JOB", payload: j });
-                      dispatch({ type: "SET_SHOW_JOB_MODAL", payload: true });
+                      openJobModal(j);
                     }}
                   >
                     <EditIcon /> Edit

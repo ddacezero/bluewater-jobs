@@ -10,12 +10,14 @@ import {
   createContext,
   useContext,
   useReducer,
+  useEffect,
   type FC,
   type ReactNode,
   type Dispatch,
 } from "react";
-import type { Candidate, PoolCandidate, Job, FillTag } from "../data/types";
+import type { Candidate, PoolCandidate, Job, FillTag, Toast } from "../data/types";
 import { INIT_CANDIDATES, INIT_POOL, INIT_JOBS } from "../data/seeds";
+import { listJobs } from "../api/jobs";
 
 /* ─── State Shape ─── */
 
@@ -34,6 +36,7 @@ export interface AppState {
   fillTags: Record<number, FillTag | undefined>;
   filterStage: string;
   filterRole: string;
+  toasts: Toast[];
 }
 
 const initialState: AppState = {
@@ -51,6 +54,7 @@ const initialState: AppState = {
   fillTags: {},
   filterStage: "All",
   filterRole: "All",
+  toasts: [],
 };
 
 /* ─── Action Types ─── */
@@ -77,7 +81,10 @@ export type AppAction =
   | { type: "NQ_ENDORSE"; payload: { candidate: Candidate; jobId: number } }
   | { type: "ADD_JOB"; payload: Job }
   | { type: "UPDATE_JOB"; payload: Job }
-  | { type: "DELETE_JOB"; payload: number };
+  | { type: "DELETE_JOB"; payload: { id: number; source?: "api" } }
+  | { type: "SET_API_JOBS"; payload: Job[] }
+  | { type: "ADD_TOAST"; payload: Toast }
+  | { type: "REMOVE_TOAST"; payload: string };
 
 /* ─── Helpers ─── */
 
@@ -321,18 +328,45 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         jobs: state.jobs.map((j) =>
-          j.id === action.payload.id ? action.payload : j
+          j.id === action.payload.id && j.source === action.payload.source
+            ? action.payload
+            : j
         ),
         showJobModal: false,
         editJob: null,
       };
 
     case "DELETE_JOB":
+      // Match on both id and source so a seeded job and an API job with the same
+      // numeric id cannot accidentally delete each other.
       return {
         ...state,
-        jobs: state.jobs.filter((j) => j.id !== action.payload),
+        jobs: state.jobs.filter(
+          (j) =>
+            !(
+              j.id === action.payload.id &&
+              j.source === action.payload.source
+            )
+        ),
         showJobModal: false,
         editJob: null,
+      };
+
+    case "SET_API_JOBS": {
+      // Replace all existing API-sourced jobs wholesale so stale entries are
+      // always reconciled with the fresh server response.
+      const seededJobs = state.jobs.filter((j) => j.source !== "api");
+      return { ...state, jobs: [...seededJobs, ...action.payload] };
+    }
+
+    /* ── Toast Notifications ── */
+    case "ADD_TOAST":
+      return { ...state, toasts: [...state.toasts, action.payload] };
+
+    case "REMOVE_TOAST":
+      return {
+        ...state,
+        toasts: state.toasts.filter((t) => t.id !== action.payload),
       };
 
     default:
@@ -357,6 +391,19 @@ interface AppProviderProps {
 
 export const AppProvider: FC<AppProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
+
+  // On mount: if a valid token exists (page refresh while logged in),
+  // fetch any API-persisted jobs and merge them with the seeded data.
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    listJobs()
+      .then((apiJobs) => dispatch({ type: "SET_API_JOBS", payload: apiJobs }))
+      .catch(() => {
+        // Silently fail — seeded jobs remain visible
+      });
+  }, []);
+
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       {children}
