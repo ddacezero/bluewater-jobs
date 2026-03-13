@@ -17,6 +17,7 @@ import {
 import Avatar from "./components/Avatar";
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import ProfileMenu from "./components/ProfileMenu";
+import { ToastContainer } from "./components/Toast";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -349,6 +350,7 @@ const App: FC = () => (
   <ThemeProvider>
     <AuthProvider>
       <AppProvider>
+        <ToastContainer />
         <Routes>
           {/* Public routes — no sidebar/topbar */}
           <Route path="/" element={<Login />} />

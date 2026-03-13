@@ -98,4 +98,14 @@ export interface Job {
   closed?: string;
   description: string;
   qualifications?: string;
+  /** undefined = seeded/local (frontend-only), "api" = persisted in the backend DB */
+  source?: "api";
+}
+
+export type ToastVariant = "success" | "error" | "info";
+
+export interface Toast {
+  id: string;
+  message: string;
+  variant: ToastVariant;
 }

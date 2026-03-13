@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Local
     "core",
+    "jobs",
 ]
 
 MIDDLEWARE = [

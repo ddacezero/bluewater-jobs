@@ -4,11 +4,14 @@
  */
 
 import { useState, type FC } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useApp } from "../context/AppContext";
+import { listJobs } from "../api/jobs";
 
 const Login: FC = () => {
   const { login, isAuthenticated } = useAuth();
+  const { dispatch } = useApp();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -16,11 +19,8 @@ const Login: FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Already logged in — go straight to dashboard
-  if (isAuthenticated) {
-    navigate("/dashboard", { replace: true });
-    return null;
-  }
+  // Already logged in — redirect declaratively (avoids side-effect during render)
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +28,13 @@ const Login: FC = () => {
     setLoading(true);
     try {
       await login(email, password);
+      // After auth succeeds, fetch any API-persisted jobs before showing the dashboard
+      try {
+        const apiJobs = await listJobs();
+        dispatch({ type: "SET_API_JOBS", payload: apiJobs });
+      } catch {
+        // Non-fatal — seeded jobs remain visible if API jobs can't be loaded
+      }
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
@@ -58,6 +65,25 @@ const Login: FC = () => {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center">
+      {/* Full-page loading overlay — shown while logging in and fetching initial data */}
+      {loading && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            background: "rgba(255,255,255,0.30)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            className="w-12 h-12 rounded-full animate-spin"
+            style={{
+              border: "3px solid rgba(31,117,185,0.20)",
+              borderTopColor: "#1f75b9",
+            }}
+          />
+        </div>
+      )}
       {/* Blurred background image */}
       <div
         className="absolute inset-0"
