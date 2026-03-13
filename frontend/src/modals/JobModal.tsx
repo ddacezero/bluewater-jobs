@@ -118,7 +118,7 @@ const JobModal: FC = () => {
     // API jobs have no seeded candidates — skip the count check entirely
     const count =
       editJob.source !== "api"
-        ? state.candidates.filter((c) => c.jobId === editJob.id).length
+        ? state.candidates.filter((c) => c.job.id === editJob.id).length
         : 0;
     if (count > 0) {
       addToast(
