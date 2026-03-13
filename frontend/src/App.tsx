@@ -35,7 +35,6 @@ import CandidateDrawer from "./modals/CandidateDrawer";
 import PoolDrawer from "./modals/PoolDrawer";
 import AddCandidateModal from "./modals/AddCandidateModal";
 import JobModal from "./modals/JobModal";
-import NotQualifiedModal from "./modals/NotQualifiedModal";
 
 /* ─── Navigation Items ─── */
 
@@ -340,7 +339,6 @@ const Layout: FC = () => {
       <PoolDrawer />
       <AddCandidateModal />
       <JobModal />
-      <NotQualifiedModal />
     </div>
   );
 };
