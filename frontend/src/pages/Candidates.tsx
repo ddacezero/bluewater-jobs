@@ -18,11 +18,11 @@ const Candidates: FC = () => {
 
   const { candidates, filterStage, filterRole } = state;
 
-  const roles = [...new Set(candidates.map((c) => c.job.title))];
+  const roles = [...new Set(candidates.map((c) => c.job?.title ?? "—"))];
 
   const filtered = candidates.filter((c) => {
     const matchStage = filterStage === "All" || c.stage === filterStage;
-    const matchRole = filterRole === "All" || c.job.title === filterRole;
+    const matchRole = filterRole === "All" || (c.job?.title ?? "—") === filterRole;
     return matchStage && matchRole;
   });
 
@@ -77,7 +77,7 @@ const Candidates: FC = () => {
       {mob ? (
         <div className="flex flex-col gap-3">
           {filtered.map((c) => {
-            const initials = c.application.name
+            const initials = (c.application?.name ?? "Unknown")
               .split(" ")
               .map((w) => w[0])
               .join("")
@@ -92,8 +92,8 @@ const Candidates: FC = () => {
                 <div className="flex items-center gap-3 mb-2.5">
                   <Avatar initials={initials} size="md" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{c.application.name}</div>
-                    <div className="text-xs text-[var(--color-text-muted)] truncate">{c.job.title}</div>
+                    <div className="font-semibold text-sm truncate">{c.application?.name ?? "Unknown"}</div>
+                    <div className="text-xs text-[var(--color-text-muted)] truncate">{c.job?.title ?? "—"}</div>
                   </div>
                   <Stars value={c.rating} />
                 </div>
@@ -106,7 +106,7 @@ const Candidates: FC = () => {
                     </span>
                   )}
                   <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-sm)] px-2.5 py-0.5 text-[11px] font-semibold">
-                    {c.application.source}
+                    {c.application?.source ?? "—"}
                   </span>
                 </div>
               </div>
@@ -130,7 +130,7 @@ const Candidates: FC = () => {
             </thead>
             <tbody>
               {filtered.map((c) => {
-                const initials = c.application.name
+                const initials = (c.application?.name ?? "Unknown")
                   .split(" ")
                   .map((w) => w[0])
                   .join("")
@@ -147,13 +147,13 @@ const Candidates: FC = () => {
                         <Avatar initials={initials} size="md" />
                         <div>
                           <div className="font-semibold text-[13.5px] text-[var(--color-text-heading)]">
-                            {c.application.name}
+                            {c.application?.name ?? "Unknown"}
                           </div>
-                          <div className="text-[11.5px] text-[var(--color-text-muted)]">{c.application.email}</div>
+                          <div className="text-[11.5px] text-[var(--color-text-muted)]">{c.application?.email ?? ""}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-[13px] text-[var(--color-text-subtle)]">{c.job.title}</td>
+                    <td className="px-5 py-3.5 text-[13px] text-[var(--color-text-subtle)]">{c.job?.title ?? "—"}</td>
                     <td className="px-5 py-3.5">
                       <Badge stage={c.stage} />
                     </td>
@@ -172,7 +172,7 @@ const Candidates: FC = () => {
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-sm)] px-2.5 py-1 text-[11px] font-semibold">
-                        {c.application.source}
+                        {c.application?.source ?? "—"}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">

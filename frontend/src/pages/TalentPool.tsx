@@ -20,10 +20,10 @@ const TalentPool: FC = () => {
   const { candidates, jobs } = state;
   const pool = candidates.filter((c) => c.is_pooled);
   const closedJobs = jobs.filter((j) => j.status === "Closed");
-  const closedJobTitles = [...new Set(pool.map((c) => c.job.title))];
+  const closedJobTitles = [...new Set(pool.map((c) => c.job?.title ?? "—"))];
 
   const filtered = pool.filter((c) => {
-    return pFilter === "all" || c.job.title === pFilter;
+    return pFilter === "all" || (c.job?.title ?? "—") === pFilter;
   });
 
   return (
@@ -82,7 +82,7 @@ const TalentPool: FC = () => {
       {mob ? (
         <div className="flex flex-col gap-3">
           {filtered.map((c) => {
-            const initials = c.application.name
+            const initials = (c.application?.name ?? "Unknown")
               .split(" ")
               .map((w) => w[0])
               .join("")
@@ -97,8 +97,8 @@ const TalentPool: FC = () => {
                 <div className="flex items-center gap-3 mb-2">
                   <Avatar initials={initials} size="md" variant="pool" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{c.application.name}</div>
-                    <div className="text-xs text-[var(--color-text-muted)] truncate">{c.job.title}</div>
+                    <div className="font-semibold text-sm truncate">{c.application?.name ?? "Unknown"}</div>
+                    <div className="text-xs text-[var(--color-text-muted)] truncate">{c.job?.title ?? "—"}</div>
                   </div>
                   <Stars value={c.rating} />
                 </div>
@@ -126,7 +126,7 @@ const TalentPool: FC = () => {
             </thead>
             <tbody>
               {filtered.map((c) => {
-                const initials = c.application.name
+                const initials = (c.application?.name ?? "Unknown")
                   .split(" ")
                   .map((w) => w[0])
                   .join("")
@@ -143,14 +143,14 @@ const TalentPool: FC = () => {
                         <Avatar initials={initials} size="md" variant="pool" />
                         <div>
                           <div className="font-semibold text-[13.5px] text-[var(--color-text-heading)]">
-                            {c.application.name}
+                            {c.application?.name ?? "Unknown"}
                           </div>
-                          <div className="text-[11.5px] text-[var(--color-text-muted)]">{c.application.email}</div>
+                          <div className="text-[11.5px] text-[var(--color-text-muted)]">{c.application?.email ?? ""}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-[13px] text-[var(--color-text-subtle)]">
-                      {c.job.title}
+                      {c.job?.title ?? "—"}
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge stage={c.stage} />

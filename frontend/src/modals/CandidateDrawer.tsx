@@ -62,6 +62,11 @@ const CandidateDrawer: FC = () => {
       await updateCandidate(c.id, { notes: notesDraft });
       dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { notes: notesDraft } } });
       setEditNotes(false);
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
     } finally {
       setLoading(false);
     }
@@ -72,6 +77,11 @@ const CandidateDrawer: FC = () => {
     try {
       await updateCandidate(c.id, { stage });
       dispatch({ type: "MOVE_STAGE", payload: { id: c.id, stage } });
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
     } finally {
       setLoading(false);
     }
@@ -82,6 +92,11 @@ const CandidateDrawer: FC = () => {
     try {
       await updateCandidate(c.id, { rating });
       dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { rating } } });
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
     } finally {
       setLoading(false);
     }
@@ -93,6 +108,11 @@ const CandidateDrawer: FC = () => {
       const apiResponse = await updateCandidate(c.id, { is_pooled: true });
       dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: apiResponse } });
       close();
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
     } finally {
       setLoading(false);
     }

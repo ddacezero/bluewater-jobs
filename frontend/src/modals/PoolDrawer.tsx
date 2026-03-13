@@ -14,17 +14,15 @@ import { updateCandidate } from "../api/candidates";
 const PoolDrawer: FC = () => {
   const { state, dispatch } = useApp();
   const mob = useMobile();
-  const [selectedJob, setSelectedJob] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { selectedCandidate: selPool, jobs } = state;
+  const { selectedCandidate: selPool } = state;
   // Only render for pooled candidates
   if (!selPool || !selPool.is_pooled) return null;
 
   const c = selPool;
-  const activeJobs = jobs.filter((j) => j.status === "Active");
 
-  const initials = c.application.name
+  const initials = (c.application?.name ?? "Unknown")
     .split(" ")
     .map((w) => w[0])
     .join("")
@@ -33,17 +31,19 @@ const PoolDrawer: FC = () => {
 
   const close = () => {
     dispatch({ type: "SELECT_CANDIDATE", payload: null });
-    setSelectedJob("");
   };
 
   const handleReactivate = async () => {
-    if (!selectedJob) return;
     setLoading(true);
     try {
       const apiResponse = await updateCandidate(c.id, { is_pooled: false });
       dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: apiResponse } });
-      setSelectedJob("");
       close();
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
     } finally {
       setLoading(false);
     }
@@ -75,10 +75,10 @@ const PoolDrawer: FC = () => {
             <Avatar initials={initials} size="lg" className="!bg-white/25 shrink-0" />
             <div className="min-w-0">
               <h2 className={`${mob ? "text-[17px]" : "text-xl"} font-bold leading-snug`}>
-                {c.application.name}
+                {c.application?.name ?? "Unknown"}
               </h2>
-              <p className="mt-1 text-[13px] opacity-90 font-medium">From: {c.job.title}</p>
-              <div className="text-[12px] opacity-80 mt-0.5">{c.application.email}</div>
+              <p className="mt-1 text-[13px] opacity-90 font-medium">From: {c.job?.title ?? "—"}</p>
+              <div className="text-[12px] opacity-80 mt-0.5">{c.application?.email ?? ""}</div>
             </div>
           </div>
         </div>
@@ -113,21 +113,9 @@ const PoolDrawer: FC = () => {
               Reactivate Candidate
             </span>
             <div className={`flex gap-2.5 ${mob ? "flex-col" : ""}`}>
-              <select
-                value={selectedJob}
-                onChange={(e) => setSelectedJob(e.target.value)}
-                className="flex-1 px-3.5 py-2.5 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[13.5px] text-[var(--color-text-primary)] outline-none font-[inherit] focus:border-[var(--color-primary)]"
-              >
-                <option value="">Select job...</option>
-                {activeJobs.map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.title}
-                  </option>
-                ))}
-              </select>
               <button
                 className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 hover:bg-[var(--color-primary-hover)] transition-colors"
-                disabled={!selectedJob || loading}
+                disabled={loading}
                 onClick={handleReactivate}
               >
                 <RedoIcon /> {loading ? "Reactivating..." : "Reactivate"}
