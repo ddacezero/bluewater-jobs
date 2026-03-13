@@ -9,21 +9,44 @@ import Badge from "../components/Badge";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
 import { XIcon, RedoIcon } from "../components/icons";
+import { updateCandidate } from "../api/candidates";
 
 const PoolDrawer: FC = () => {
   const { state, dispatch } = useApp();
   const mob = useMobile();
   const [selectedJob, setSelectedJob] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const { selectedPoolCandidate: selPool, jobs } = state;
-  if (!selPool) return null;
+  const { selectedCandidate: selPool, jobs } = state;
+  // Only render for pooled candidates
+  if (!selPool || !selPool.is_pooled) return null;
 
   const c = selPool;
   const activeJobs = jobs.filter((j) => j.status === "Active");
 
+  const initials = c.application.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
   const close = () => {
-    dispatch({ type: "SELECT_POOL_CANDIDATE", payload: null });
+    dispatch({ type: "SELECT_CANDIDATE", payload: null });
     setSelectedJob("");
+  };
+
+  const handleReactivate = async () => {
+    if (!selectedJob) return;
+    setLoading(true);
+    try {
+      const apiResponse = await updateCandidate(c.id, { is_pooled: false });
+      dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: apiResponse } });
+      setSelectedJob("");
+      close();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,13 +72,13 @@ const PoolDrawer: FC = () => {
             <XIcon />
           </button>
           <div className="flex items-center gap-4">
-            <Avatar initials={c.avatar} size="lg" className="!bg-white/25 shrink-0" />
+            <Avatar initials={initials} size="lg" className="!bg-white/25 shrink-0" />
             <div className="min-w-0">
               <h2 className={`${mob ? "text-[17px]" : "text-xl"} font-bold leading-snug`}>
-                {c.name}
+                {c.application.name}
               </h2>
-              <p className="mt-1 text-[13px] opacity-90 font-medium">From: {c.closedJob}</p>
-              <div className="text-[12px] opacity-80 mt-0.5">{c.email}</div>
+              <p className="mt-1 text-[13px] opacity-90 font-medium">From: {c.job.title}</p>
+              <div className="text-[12px] opacity-80 mt-0.5">{c.application.email}</div>
             </div>
           </div>
         </div>
@@ -67,7 +90,7 @@ const PoolDrawer: FC = () => {
               <span className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide block mb-1.5">
                 Last Stage
               </span>
-              <Badge stage={c.lastStage} />
+              <Badge stage={c.stage} />
             </div>
             <div className="text-right">
               <span className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide block mb-1.5">
@@ -83,26 +106,6 @@ const PoolDrawer: FC = () => {
               <p className="text-[13px] text-[var(--color-notes-text)] leading-relaxed">{c.notes}</p>
             </div>
           )}
-
-          {/* Skills */}
-          <div>
-            <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide block mb-2">
-              Skills
-            </span>
-            <div className="flex gap-1.5 flex-wrap">
-              {c.tags.map((t) => (
-                <span
-                  key={t}
-                  className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-2.5 py-1 text-[12px] font-semibold"
-                >
-                  {t}
-                </span>
-              ))}
-              {!c.tags.length && (
-                <span className="text-[12.5px] text-[var(--color-text-placeholder)] italic">None</span>
-              )}
-            </div>
-          </div>
 
           {/* Reactivate */}
           <div className="border-t border-[var(--color-surface-border)] pt-5">
@@ -124,18 +127,10 @@ const PoolDrawer: FC = () => {
               </select>
               <button
                 className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 hover:bg-[var(--color-primary-hover)] transition-colors"
-                disabled={!selectedJob}
-                onClick={() => {
-                  if (selectedJob) {
-                    dispatch({
-                      type: "REACTIVATE_POOL",
-                      payload: { poolCandidate: c, jobId: Number(selectedJob) },
-                    });
-                    setSelectedJob("");
-                  }
-                }}
+                disabled={!selectedJob || loading}
+                onClick={handleReactivate}
               >
-                <RedoIcon /> Reactivate
+                <RedoIcon /> {loading ? "Reactivating..." : "Reactivate"}
               </button>
             </div>
           </div>
