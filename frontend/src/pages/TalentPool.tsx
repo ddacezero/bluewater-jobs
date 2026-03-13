@@ -44,7 +44,7 @@ const TalentPool: FC = () => {
         className={`grid ${mob ? "grid-cols-1" : `grid-cols-${Math.min(closedJobs.length, 4)}`} gap-5 mb-6`}
       >
         {closedJobs.map((j) => {
-          const cnt = pool.filter((c) => c.job.id === j.id).length;
+          const cnt = pool.filter((c) => c.job?.id === j.id).length;
           const isActive = pFilter === j.title;
           return (
             <div

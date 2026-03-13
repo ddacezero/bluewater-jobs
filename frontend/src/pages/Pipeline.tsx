@@ -18,7 +18,7 @@ const Pipeline: FC = () => {
 
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
 
-  const activeJobs = jobs.filter((j) => j.source === "api");
+  const activeJobs = jobs.filter((j) => j.status === "Active" && j.source === "api");
   const effectiveJobId = selectedJobId ?? activeJobs[0]?.id ?? null;
   const filteredCandidates = effectiveJobId
     ? candidates.filter((c) => c.job?.id === effectiveJobId)
