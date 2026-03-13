@@ -92,3 +92,40 @@ class CandidateSerializerTest(TestCase):
         # job nested fields
         self.assertIn("title", data["job"])
         self.assertIn("location", data["job"])
+
+
+from rest_framework.test import APIRequestFactory
+from jobs.permissions import CandidatePermission
+
+
+class CandidatePermissionTest(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.perm = CandidatePermission()
+
+    def _req(self, method, role):
+        req = getattr(self.factory, method)("/")
+        req.user = make_user(email=f"{role}@test.com", role=role)
+        return req
+
+    def test_get_allowed_for_all_roles(self):
+        for role in ("hr_manager", "talent_acquisition_manager", "talent_acquisition_specialist"):
+            req = self._req("get", role)
+            self.assertTrue(self.perm.has_permission(req, None))
+
+    def test_patch_allowed_for_all_roles(self):
+        for role in ("hr_manager", "talent_acquisition_manager", "talent_acquisition_specialist"):
+            req = self._req("patch", role)
+            self.assertTrue(self.perm.has_permission(req, None))
+
+    def test_post_restricted_to_full_access(self):
+        req = self._req("post", "talent_acquisition_specialist")
+        self.assertFalse(self.perm.has_permission(req, None))
+        req = self._req("post", "hr_manager")
+        self.assertTrue(self.perm.has_permission(req, None))
+
+    def test_delete_restricted_to_full_access(self):
+        req = self._req("delete", "talent_acquisition_specialist")
+        self.assertFalse(self.perm.has_permission(req, None))
+        req = self._req("delete", "talent_acquisition_manager")
+        self.assertTrue(self.perm.has_permission(req, None))
