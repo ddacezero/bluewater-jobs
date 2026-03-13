@@ -214,13 +214,16 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
+    const errorToast = (message: string) =>
+      dispatch({ type: "ADD_TOAST", payload: { id: Date.now().toString(), message, variant: "error" } });
+
     listJobs()
       .then((apiJobs) => dispatch({ type: "SET_API_JOBS", payload: apiJobs }))
-      .catch(() => {});
+      .catch(() => errorToast("Failed to load jobs. Please refresh."));
 
     listCandidates()
       .then((candidates) => dispatch({ type: "SET_API_CANDIDATES", payload: candidates }))
-      .catch(() => {});
+      .catch(() => errorToast("Failed to load candidates. Please refresh."));
   }, []);
 
   return (

@@ -29,38 +29,51 @@ const AddCandidateModal: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     name: "",
     email: "",
     phone_number: "",
     expected_salary: "",
     cover_letter: "",
     source: "Website" as string,
-    job_id: activeJobs[0]?.id?.toString() || "",
+    job_id: "",
     recruiter_id: "",
-  });
+  };
+
+  const [form, setForm] = useState(emptyForm);
   const [resume, setResume] = useState<File | null>(null);
+
+  // Auto-select the first active job once jobs are available
+  useEffect(() => {
+    if (!form.job_id && activeJobs.length > 0) {
+      setForm((prev) => ({ ...prev, job_id: activeJobs[0].id.toString() }));
+    }
+    setJobsLoading(activeJobs.length === 0);
+  }, [activeJobs.length]);
 
   useEffect(() => {
     if (!showAddModal) return;
     const token = localStorage.getItem("access_token");
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // Pre-set jobsLoading — jobs come from AppContext (already fetched on mount)
-    // but we need to wait one tick for activeJobs to be populated
-    setJobsLoading(activeJobs.length === 0);
-
     fetch("http://localhost:8000/api/auth/users/", { headers })
       .then((r) => r.json())
       .then(setUsers)
       .catch(() => {});
-  }, [showAddModal, activeJobs.length]);
+  }, [showAddModal]);
 
   if (!showAddModal) return null;
 
+  const resetForm = () => {
+    setForm(emptyForm);
+    setResume(null);
+    setError(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   const close = () => {
     dispatch({ type: "SET_SHOW_ADD_MODAL", payload: false });
-    setError(null);
+    resetForm();
   };
 
   const handleSubmit = async () => {
@@ -89,6 +102,7 @@ const AddCandidateModal: FC = () => {
         type: "ADD_TOAST",
         payload: { id: Date.now().toString(), message: "Candidate added successfully.", variant: "success" },
       });
+      resetForm();
     } catch {
       setError("Failed to add candidate. Please try again.");
     } finally {
