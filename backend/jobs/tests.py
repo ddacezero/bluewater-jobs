@@ -50,3 +50,15 @@ class SignalTest(TestCase):
         self.assertIsNone(c.pooled_at)
         self.assertIsNone(c.recruiter)
         self.assertEqual(c.job, job)
+
+    def test_no_duplicate_candidate_on_application_update(self):
+        job = make_job()
+        app = JobApplication.objects.create(
+            job=job, name="Ana Reyes", email="ana@test.com",
+            phone_number="09171234567", resume=make_resume(),
+            expected_salary="25000.00", agreement=True, source="Website",
+        )
+        # Trigger a save (update, not create) — signal guard must not fire again
+        app.name = "Ana Reyes Updated"
+        app.save()
+        self.assertEqual(Candidate.objects.filter(application=app).count(), 1)
