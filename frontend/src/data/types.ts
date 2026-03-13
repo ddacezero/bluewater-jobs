@@ -22,10 +22,7 @@ export type Source =
   | "Indeed"
   | "Referral"
   | "Endorsed"
-  | "Talent Pool"
   | "Other";
-
-export type Recruiter = "Joela" | "Ranie";
 
 export type Location =
   | "Bluewater Maribago"
@@ -49,42 +46,41 @@ export interface StageColor {
   dot: string;
 }
 
-export interface Candidate {
+export interface ApplicationNested {
   id: number;
   name: string;
   email: string;
-  role: string;
-  stage: Stage;
-  rating: number;
-  applied: string;
-  avatar: string;
-  tags: string[];
+  phone_number: string;
+  resume: string;
+  expected_salary: string;
   source: string;
-  jobId: number;
-  recruiter: string;
-  notes: string;
-  resumeName: string;
-  talents: string[];
-  examResultName: string;
-  endorsedFrom?: string;
+  created_at: string;
 }
 
-export interface PoolCandidate {
+export interface JobNested {
+  id: number;
+  title: string;
+  location: string;
+}
+
+export interface RecruiterNested {
   id: number;
   name: string;
-  role: string;
-  lastStage: Stage;
-  rating: number;
-  applied: string;
-  email: string;
-  avatar: string;
-  tags: string[];
-  source: string;
-  jobId: number;
-  closedJob: string;
-  pooledDate: string;
+}
+
+export interface Candidate {
+  id: number;
+  stage: Stage;
+  rating: number;           // 0 = unrated, 1–5 stars
+  recruiter: RecruiterNested | null;
   notes: string;
-  talents?: string[];
+  exam_result: string | null;
+  endorsed_from: string | null;
+  is_pooled: boolean;
+  pooled_at: string | null;
+  created_at: string;
+  application: ApplicationNested;
+  job: JobNested;
 }
 
 export interface Job {

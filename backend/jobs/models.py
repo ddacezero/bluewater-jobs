@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -34,7 +35,7 @@ class Job(models.Model):
     posted = models.CharField(max_length=50)
     closed = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, default="")
-    qualifications = models.TextField(blank=True, null=True)
+    qualifications = models.TextField(blank=True, default="")
 
     class Meta:
         db_table = "jobs"
@@ -51,6 +52,11 @@ def applicant_resume_upload_to(instance, filename: str) -> str:
 class JobApplication(models.Model):
     SOURCE_CHOICES = [
         ("Website", "Website"),
+        ("LinkedIn", "LinkedIn"),
+        ("Indeed", "Indeed"),
+        ("Referral", "Referral"),
+        ("Endorsed", "Endorsed"),
+        ("Other", "Other"),
     ]
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="applications")
@@ -70,3 +76,43 @@ class JobApplication(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} - {self.job.title}"
+
+
+class Candidate(models.Model):
+    STAGE_CHOICES = [
+        ("Applied", "Applied"),
+        ("Screening", "Screening"),
+        ("Initial Interview", "Initial Interview"),
+        ("Exam", "Exam"),
+        ("Departmental Interview", "Departmental Interview"),
+        ("Final Interview", "Final Interview"),
+        ("Job Offer", "Job Offer"),
+        ("Hired", "Hired"),
+        ("Rejected", "Rejected"),
+    ]
+
+    application = models.OneToOneField(
+        JobApplication, on_delete=models.CASCADE, related_name="candidate"
+    )
+    # Deliberate denormalization of application.job for direct filtering
+    # without joining through application.
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="candidates")
+    recruiter = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="assigned_candidates"
+    )
+    stage = models.CharField(max_length=50, choices=STAGE_CHOICES, default="Applied")
+    rating = models.IntegerField(default=0)
+    notes = models.TextField(blank=True, default="")
+    exam_result = models.FileField(upload_to="exam-results/", null=True, blank=True)
+    endorsed_from = models.CharField(max_length=200, blank=True, default="")
+    is_pooled = models.BooleanField(default=False)
+    pooled_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "candidates"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.application.name} — {self.job.title}"

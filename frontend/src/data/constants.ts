@@ -3,9 +3,7 @@
  * Single source of truth for stages, recruiters, locations, and stage colors.
  */
 
-import type { Stage, StageColor, Recruiter, Location } from "./types";
-
-export const RECRUITERS: Recruiter[] = ["Joela", "Ranie"];
+import type { Stage, StageColor, Location } from "./types";
 
 export const LOCATIONS: Location[] = [
   "Bluewater Maribago",

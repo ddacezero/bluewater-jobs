@@ -1,6 +1,6 @@
 /**
- * Candidate Drawer — full candidate detail modal with skill/notes editing,
- * resume/exam upload, stage mover, and endorse functionality.
+ * Candidate Drawer — full candidate detail modal with notes editing,
+ * resume/exam display, stage mover, rating, and pool action.
  */
 
 import { useState, useRef, type FC } from "react";
@@ -8,79 +8,124 @@ import { useApp } from "../context/AppContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { STAGES, STAGE_COLORS } from "../data/constants";
 import Badge from "../components/Badge";
-import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
 import {
-  XIcon, TagIcon, NoteIcon, TrophyIcon, UploadIcon, DownloadIcon,
-  EndorseIcon, ClipboardIcon,
+  XIcon, NoteIcon, UploadIcon, DownloadIcon,
+  EndorseIcon, ClipboardIcon, PoolIcon, StarIcon,
 } from "../components/icons";
+import { updateCandidate } from "../api/candidates";
+import type { Stage } from "../data/types";
 
 const CandidateDrawer: FC = () => {
   const { state, dispatch } = useApp();
   const mob = useMobile();
 
-  const [endorseJob, setEndorseJob] = useState("");
-  const [showEndorse, setShowEndorse] = useState(false);
   const [editNotes, setEditNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
-  const [editSkills, setEditSkills] = useState(false);
-  const [newSkill, setNewSkill] = useState("");
-  const [editTalents, setEditTalents] = useState(false);
-  const [newTalent, setNewTalent] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const examRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
 
-  const { selectedCandidate: selC, candidates, jobs } = state;
+  const { selectedCandidate: selC, candidates } = state;
   if (!selC) return null;
 
   const c = candidates.find((x) => x.id === selC.id) || selC;
-  const activeJobs = jobs.filter((j) => j.status === "Active");
+
+  // Only show for non-pooled candidates
+  if (c.is_pooled) return null;
+
   const nextStages = STAGES.filter((s) => s !== c.stage && s !== "Rejected");
-  const otherJobs = activeJobs.filter((j) => j.id !== c.jobId);
+
+  const initials = c.application.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const resumeName = c.application.resume
+    ? c.application.resume.split("/").pop() ?? "resume"
+    : null;
+
+  const examResultName = c.exam_result
+    ? c.exam_result.split("/").pop() ?? "exam"
+    : null;
 
   const close = () => {
     dispatch({ type: "SELECT_CANDIDATE", payload: null });
-    setShowEndorse(false);
-    setEndorseJob("");
-    setEditNotes(false);
-    setEditSkills(false);
-    setEditTalents(false);
-    setNewTalent("");
-  };
-
-  const addSkill = () => {
-    if (!newSkill.trim()) return;
-    dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { tags: [...c.tags, newSkill.trim()] } } });
-    setNewSkill("");
-  };
-
-  const rmSkill = (t: string) => {
-    dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { tags: c.tags.filter((x) => x !== t) } } });
-  };
-
-  const addTalent = () => {
-    if (!newTalent.trim()) return;
-    dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { talents: [...(c.talents || []), newTalent.trim()] } } });
-    setNewTalent("");
-  };
-
-  const rmTalent = (t: string) => {
-    dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { talents: (c.talents || []).filter((x) => x !== t) } } });
-  };
-
-  const saveNotes = () => {
-    dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { notes: notesDraft } } });
     setEditNotes(false);
   };
 
-  const handleResume = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { resumeName: f.name } } });
+  const saveNotes = async () => {
+    setLoading(true);
+    try {
+      await updateCandidate(c.id, { notes: notesDraft });
+      dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { notes: notesDraft } } });
+      setEditNotes(false);
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleExam = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { examResultName: f.name } } });
+  const handleMoveStage = async (stage: Stage) => {
+    setLoading(true);
+    try {
+      await updateCandidate(c.id, { stage });
+      dispatch({ type: "MOVE_STAGE", payload: { id: c.id, stage } });
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRating = async (rating: number) => {
+    setLoading(true);
+    try {
+      await updateCandidate(c.id, { rating });
+      dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { rating } } });
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToPool = async () => {
+    setLoading(true);
+    try {
+      const apiResponse = await updateCandidate(c.id, { is_pooled: true });
+      dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: apiResponse } });
+      close();
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResume = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    // Resume upload not supported via this drawer in the current API shape.
+    // The resume URL lives on the Application record — upload must go through
+    // the application endpoint.
+  };
+
+  const handleExam = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    // Exam result upload not supported via this drawer in the current API shape.
   };
 
   return (
@@ -106,13 +151,13 @@ const CandidateDrawer: FC = () => {
             <XIcon />
           </button>
           <div className="flex items-center gap-4">
-            <Avatar initials={c.avatar} size="lg" className="!bg-white/25 shrink-0" />
+            <Avatar initials={initials} size="lg" className="!bg-white/25 shrink-0" />
             <div className="min-w-0">
               <h2 className={`${mob ? "text-[17px]" : "text-xl"} font-bold leading-snug`}>
-                {c.name}
+                {c.application.name}
               </h2>
-              <p className="mt-1 text-[13px] opacity-90 font-medium">{c.role}</p>
-              <div className="text-[12px] opacity-80 mt-0.5">{c.email}</div>
+              <p className="mt-1 text-[13px] opacity-90 font-medium">{c.job.title}</p>
+              <div className="text-[12px] opacity-80 mt-0.5">{c.application.email}</div>
             </div>
           </div>
         </div>
@@ -130,7 +175,18 @@ const CandidateDrawer: FC = () => {
               <span className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide block mb-1.5">
                 Rating
               </span>
-              <Stars value={c.rating} />
+              <span className="inline-flex gap-px">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <button
+                    key={i}
+                    className="bg-transparent border-none cursor-pointer p-0 flex"
+                    disabled={loading}
+                    onClick={() => handleRating(i)}
+                  >
+                    <StarIcon filled={i <= c.rating} />
+                  </button>
+                ))}
+              </span>
             </div>
           </div>
 
@@ -141,85 +197,31 @@ const CandidateDrawer: FC = () => {
                 <span className="text-[10px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
                   Applied
                 </span>
-                <p className="mt-1 text-[13.5px] font-semibold">{c.applied}</p>
+                <p className="mt-1 text-[13.5px] font-semibold">{c.application.created_at}</p>
               </div>
               <div>
                 <span className="text-[10px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
                   Source
                 </span>
-                <p className="mt-1 text-[13.5px] font-semibold">{c.source}</p>
+                <p className="mt-1 text-[13.5px] font-semibold">{c.application.source}</p>
               </div>
               <div>
                 <span className="text-[10px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
                   Recruiter
                 </span>
                 <p className="mt-1 text-[13.5px] font-semibold text-[var(--color-primary)]">
-                  {c.recruiter || "—"}
+                  {c.recruiter?.name ?? "Unassigned"}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Endorsed From */}
-          {c.endorsedFrom && (
+          {c.endorsed_from && (
             <div className="bg-[var(--color-primary-light)] border border-[var(--color-primary-gradient-end)] rounded-[var(--radius-md)] px-3.5 py-2.5 text-[12.5px] text-[var(--color-primary)] flex items-center gap-1.5">
-              <EndorseIcon /> Endorsed from <strong>{c.endorsedFrom}</strong>
+              <EndorseIcon /> Endorsed from <strong>{c.endorsed_from}</strong>
             </div>
           )}
-
-          {/* Skills */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
-                Skills
-              </span>
-              <button
-                className="border border-[var(--color-surface-muted)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold inline-flex items-center gap-1 bg-transparent cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors"
-                onClick={() => setEditSkills(!editSkills)}
-              >
-                <TagIcon />
-                {editSkills ? "Done" : "Edit"}
-              </button>
-            </div>
-            <div className="flex gap-1.5 flex-wrap min-h-[28px]">
-              {c.tags.map((t) => (
-                <span
-                  key={t}
-                  className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-2.5 py-1 text-[12px] font-semibold inline-flex items-center gap-1"
-                >
-                  {t}
-                  {editSkills && (
-                    <span
-                      className="cursor-pointer font-extrabold text-[var(--color-danger-dark)] ml-0.5 leading-none"
-                      onClick={() => rmSkill(t)}
-                    >
-                      ×
-                    </span>
-                  )}
-                </span>
-              ))}
-              {!c.tags.length && !editSkills && (
-                <span className="text-[12.5px] text-[var(--color-text-placeholder)] italic">None</span>
-              )}
-            </div>
-            {editSkills && (
-              <div className="flex gap-2 mt-2">
-                <input
-                  className="flex-1 px-3.5 py-2 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[13.5px] text-[var(--color-text-primary)] outline-none font-[inherit] focus:border-[var(--color-primary)]"
-                  placeholder="Add skill..."
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") addSkill(); }}
-                />
-                <button
-                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-3.5 py-2 text-[13px] font-semibold cursor-pointer hover:bg-[var(--color-primary-hover)] transition-colors"
-                  onClick={addSkill}
-                >
-                  Add
-                </button>
-              </div>
-            )}
-          </div>
 
           {/* Notes */}
           <div>
@@ -228,7 +230,8 @@ const CandidateDrawer: FC = () => {
                 Notes
               </span>
               <button
-                className="border border-[var(--color-surface-muted)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold inline-flex items-center gap-1 bg-transparent cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors"
+                className="border border-[var(--color-surface-muted)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold inline-flex items-center gap-1 bg-transparent cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors disabled:opacity-50"
+                disabled={loading}
                 onClick={() => {
                   if (editNotes) {
                     saveNotes();
@@ -239,7 +242,7 @@ const CandidateDrawer: FC = () => {
                 }}
               >
                 <NoteIcon />
-                {editNotes ? "Save" : "Edit"}
+                {editNotes ? (loading ? "Saving..." : "Save") : "Edit"}
               </button>
             </div>
             {editNotes ? (
@@ -263,60 +266,6 @@ const CandidateDrawer: FC = () => {
             )}
           </div>
 
-          {/* Talents / Hobbies */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
-                Talents / Hobbies / Sports
-              </span>
-              <button
-                className="border border-[var(--color-surface-muted)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold inline-flex items-center gap-1 bg-transparent cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors"
-                onClick={() => setEditTalents(!editTalents)}
-              >
-                <TrophyIcon />
-                {editTalents ? "Done" : "Edit"}
-              </button>
-            </div>
-            <div className="flex gap-1.5 flex-wrap min-h-[28px]">
-              {(c.talents || []).map((t) => (
-                <span
-                  key={t}
-                  className="bg-[var(--color-purple-light)] text-[#7B1FA2] rounded-[var(--radius-md)] px-2.5 py-1 text-[12px] font-semibold inline-flex items-center gap-1"
-                >
-                  {t}
-                  {editTalents && (
-                    <span
-                      className="cursor-pointer font-extrabold text-[var(--color-danger-dark)] ml-0.5 leading-none"
-                      onClick={() => rmTalent(t)}
-                    >
-                      ×
-                    </span>
-                  )}
-                </span>
-              ))}
-              {!(c.talents || []).length && !editTalents && (
-                <span className="text-[12.5px] text-[var(--color-text-placeholder)] italic">None</span>
-              )}
-            </div>
-            {editTalents && (
-              <div className="flex gap-2 mt-2">
-                <input
-                  className="flex-1 px-3.5 py-2 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[13.5px] text-[var(--color-text-primary)] outline-none font-[inherit] focus:border-[var(--color-primary)]"
-                  placeholder="Add talent, hobby, or sport..."
-                  value={newTalent}
-                  onChange={(e) => setNewTalent(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") addTalent(); }}
-                />
-                <button
-                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-3.5 py-2 text-[13px] font-semibold cursor-pointer hover:bg-[var(--color-primary-hover)] transition-colors"
-                  onClick={addTalent}
-                >
-                  Add
-                </button>
-              </div>
-            )}
-          </div>
-
           {/* Resume */}
           <div>
             <div className="flex justify-between items-center mb-2">
@@ -334,13 +283,18 @@ const CandidateDrawer: FC = () => {
                 </button>
               </div>
             </div>
-            {c.resumeName ? (
+            {resumeName ? (
               <div className="bg-[var(--color-surface-hover)] border border-[var(--color-surface-muted)] rounded-[var(--radius-md)] px-3.5 py-2.5 flex items-center gap-2">
                 <NoteIcon />
-                <span className="text-[13px] font-medium flex-1 truncate">{c.resumeName}</span>
-                <button className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer">
+                <span className="text-[13px] font-medium flex-1 truncate">{resumeName}</span>
+                <a
+                  href={c.application.resume}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
+                >
                   <DownloadIcon />
-                </button>
+                </a>
               </div>
             ) : (
               <p className="text-[12.5px] text-[var(--color-text-placeholder)] italic">No resume uploaded</p>
@@ -364,13 +318,18 @@ const CandidateDrawer: FC = () => {
                 </button>
               </div>
             </div>
-            {c.examResultName ? (
+            {examResultName ? (
               <div className="bg-[var(--color-exam-bg)] border border-[var(--color-exam-border)] rounded-[var(--radius-md)] px-3.5 py-2.5 flex items-center gap-2">
                 <ClipboardIcon />
-                <span className="text-[13px] font-medium flex-1 truncate">{c.examResultName}</span>
-                <button className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer">
+                <span className="text-[13px] font-medium flex-1 truncate">{examResultName}</span>
+                <a
+                  href={c.exam_result!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
+                >
                   <DownloadIcon />
-                </button>
+                </a>
               </div>
             ) : (
               <p className="text-[12.5px] text-[var(--color-text-placeholder)] italic">No exam results uploaded</p>
@@ -386,20 +345,22 @@ const CandidateDrawer: FC = () => {
               {nextStages.map((s) => (
                 <button
                   key={s}
-                  className="rounded-[var(--radius-md)] px-3 py-1.5 text-[12px] font-semibold bg-transparent cursor-pointer transition-colors hover:bg-opacity-10"
+                  className="rounded-[var(--radius-md)] px-3 py-1.5 text-[12px] font-semibold bg-transparent cursor-pointer transition-colors hover:bg-opacity-10 disabled:opacity-50"
                   style={{
                     border: `1.5px solid ${STAGE_COLORS[s].dot}`,
                     color: STAGE_COLORS[s].text,
                   }}
-                  onClick={() => dispatch({ type: "MOVE_STAGE", payload: { id: c.id, stage: s } })}
+                  disabled={loading}
+                  onClick={() => handleMoveStage(s as Stage)}
                 >
                   {s.replace("Interview", "Int.").replace("Departmental", "Dept.")}
                 </button>
               ))}
               {c.stage !== "Rejected" && (
                 <button
-                  className="border border-[var(--color-danger)] text-[var(--color-danger-dark)] rounded-[var(--radius-md)] px-3 py-1.5 text-[12px] font-semibold bg-transparent cursor-pointer hover:bg-[var(--color-danger-bg)] transition-colors"
-                  onClick={() => dispatch({ type: "MOVE_STAGE", payload: { id: c.id, stage: "Rejected" } })}
+                  className="border border-[var(--color-danger)] text-[var(--color-danger-dark)] rounded-[var(--radius-md)] px-3 py-1.5 text-[12px] font-semibold bg-transparent cursor-pointer hover:bg-[var(--color-danger-bg)] transition-colors disabled:opacity-50"
+                  disabled={loading}
+                  onClick={() => handleMoveStage("Rejected")}
                 >
                   Reject
                 </button>
@@ -407,57 +368,20 @@ const CandidateDrawer: FC = () => {
             </div>
           </div>
 
-          {/* Endorse */}
+          {/* Add to Talent Pool */}
           <div className="border-t border-[var(--color-surface-border)] pt-5">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center">
               <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
-                Endorse to Another Job
+                Talent Pool
               </span>
               <button
-                className={`${
-                  showEndorse
-                    ? "bg-[var(--color-primary)] text-white shadow-[var(--shadow-btn)]"
-                    : "border border-[var(--color-surface-muted)] text-[var(--color-primary)] bg-transparent hover:bg-[var(--color-primary-light)]"
-                } rounded-[var(--radius-md)] px-3.5 py-1.5 text-[12px] font-semibold cursor-pointer transition-colors`}
-                onClick={() => setShowEndorse(!showEndorse)}
+                className="border border-[var(--color-purple)] text-[var(--color-purple)] rounded-[var(--radius-md)] px-3.5 py-1.5 text-[12px] font-semibold cursor-pointer inline-flex items-center gap-2 bg-transparent hover:bg-[var(--color-purple-light)] transition-colors disabled:opacity-50"
+                disabled={loading}
+                onClick={handleAddToPool}
               >
-                {showEndorse ? "Cancel" : "Endorse"}
+                <PoolIcon /> {loading ? "Adding..." : "Add to Pool"}
               </button>
             </div>
-            {showEndorse && (
-              <div className="bg-[var(--color-surface-hover)] rounded-[var(--radius-md)] p-4">
-                <div className={`flex gap-2.5 ${mob ? "flex-col" : ""}`}>
-                  <select
-                    value={endorseJob}
-                    onChange={(e) => setEndorseJob(e.target.value)}
-                    className="flex-1 px-3.5 py-2.5 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[13.5px] text-[var(--color-text-primary)] outline-none font-[inherit] focus:border-[var(--color-primary)]"
-                  >
-                    <option value="">Select job...</option>
-                    {otherJobs.map((j) => (
-                      <option key={j.id} value={j.id}>
-                        {j.title}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer disabled:opacity-50 hover:bg-[var(--color-primary-hover)] transition-colors"
-                    disabled={!endorseJob}
-                    onClick={() => {
-                      if (endorseJob) {
-                        dispatch({
-                          type: "ENDORSE_CANDIDATE",
-                          payload: { candidate: c, jobId: Number(endorseJob) },
-                        });
-                        setEndorseJob("");
-                        setShowEndorse(false);
-                      }
-                    }}
-                  >
-                    Confirm
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

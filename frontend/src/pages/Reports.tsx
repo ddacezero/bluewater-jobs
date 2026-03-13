@@ -7,7 +7,7 @@ import { useState, type FC } from "react";
 import { useApp } from "../context/AppContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { STAGES, STAGE_COLORS, REPORT_MONTHS } from "../data/constants";
-import type { Job } from "../data/types";
+import type { Job, Candidate } from "../data/types";
 import { DownloadIcon } from "../components/icons";
 
 const Reports: FC = () => {
@@ -17,7 +17,8 @@ const Reports: FC = () => {
   const [repJob, setRepJob] = useState("all");
   const [repMonth, setRepMonth] = useState("all");
 
-  const { candidates, pool, jobs, fillTags } = state;
+  const { candidates, jobs, fillTags } = state;
+  const pool = candidates.filter((c) => c.is_pooled);
 
   const jobsToReport =
     repJob === "all" ? jobs : jobs.filter((j) => j.id === Number(repJob));
@@ -30,23 +31,18 @@ const Reports: FC = () => {
 
   const getStats = (job: Job, month: string) => {
     let all = [
-      ...candidates.filter((c) => c.jobId === job.id),
-      ...pool.filter((p) => p.jobId === job.id),
+      ...candidates.filter((c) => c.job.id === job.id),
+      ...pool.filter((p: Candidate) => p.job.id === job.id),
     ];
     if (month !== "all") {
       all = all.filter((c) => {
-        const d =
-          ("applied" in c ? c.applied : "") ||
-          ("pooledDate" in c ? (c as { pooledDate?: string }).pooledDate : "") ||
-          "";
+        const d = (c.is_pooled ? c.pooled_at : c.created_at) ?? "";
         return d.includes(month.split(" ")[0]);
       });
     }
     const sc: Record<string, number> = {};
     STAGES.forEach((s) => {
-      sc[s] = all.filter(
-        (c) => ("stage" in c ? c.stage : (c as { lastStage?: string }).lastStage) === s
-      ).length;
+      sc[s] = all.filter((c) => c.stage === s).length;
     });
     const t = all.length;
     const hr = t > 0 ? ((sc["Hired"] / t) * 100).toFixed(0) : "0";
@@ -130,16 +126,14 @@ const Reports: FC = () => {
     csv += "\n\nCandidate Details\nName,Email,Role,Stage,Rating,Applied,Recruiter,Source\n";
     jobsToReport.forEach((job) => {
       [
-        ...candidates.filter((c) => c.jobId === job.id),
-        ...pool.filter((p) => p.jobId === job.id),
+        ...candidates.filter((c) => c.job.id === job.id),
+        ...pool.filter((p: Candidate) => p.job.id === job.id),
       ].forEach((c) => {
-        const stage = "stage" in c ? c.stage : (c as { lastStage?: string }).lastStage || "";
-        const applied =
-          "applied" in c ? c.applied : (c as { pooledDate?: string }).pooledDate || "";
-        const recruiter = "recruiter" in c ? c.recruiter : "";
-        const role =
-          "role" in c ? c.role : (c as { closedJob?: string }).closedJob || "";
-        csv += `"${c.name}","${c.email}","${role}","${stage}",${c.rating},"${applied}","${recruiter}","${c.source}"\n`;
+        const stage = c.stage;
+        const applied = c.is_pooled ? (c.pooled_at ?? "") : (c.created_at ?? "");
+        const recruiter = c.recruiter ? c.recruiter.name : "";
+        const role = c.job.title;
+        csv += `"${c.application.name}","${c.application.email}","${role}","${stage}",${c.rating},"${applied}","${recruiter}","${c.application.source}"\n`;
       });
     });
     const blob = new Blob([csv], { type: "text/csv" });

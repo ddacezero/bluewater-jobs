@@ -1,6 +1,6 @@
 /**
  * Global application state management for Bluewater Jobs ATS.
- * Uses React Context + useReducer to centralize all candidates, jobs, pool data,
+ * Uses React Context + useReducer to centralize all candidates, jobs,
  * and UI state (selected candidate, modal visibility, etc.).
  *
  * Components consume state via the useApp() hook.
@@ -15,24 +15,20 @@ import {
   type ReactNode,
   type Dispatch,
 } from "react";
-import type { Candidate, PoolCandidate, Job, FillTag, Toast } from "../data/types";
-import { INIT_CANDIDATES, INIT_POOL, INIT_JOBS } from "../data/seeds";
+import type { Candidate, Job, FillTag, Toast } from "../data/types";
+import { INIT_JOBS } from "../data/seeds";
 import { listJobs } from "../api/jobs";
+import { listCandidates } from "../api/candidates";
 
 /* ─── State Shape ─── */
 
 export interface AppState {
   candidates: Candidate[];
-  pool: PoolCandidate[];
   jobs: Job[];
   selectedCandidate: Candidate | null;
-  selectedPoolCandidate: PoolCandidate | null;
   showAddModal: boolean;
   showJobModal: boolean;
   editJob: Job | null;
-  nqCandidate: Candidate | null;
-  nqAction: "endorse" | null;
-  nqJob: string;
   fillTags: Record<number, FillTag | undefined>;
   filterStage: string;
   filterRole: string;
@@ -40,17 +36,12 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  candidates: INIT_CANDIDATES,
-  pool: INIT_POOL,
+  candidates: [],
   jobs: INIT_JOBS,
   selectedCandidate: null,
-  selectedPoolCandidate: null,
   showAddModal: false,
   showJobModal: false,
   editJob: null,
-  nqCandidate: null,
-  nqAction: null,
-  nqJob: "",
   fillTags: {},
   filterStage: "All",
   filterRole: "All",
@@ -63,39 +54,20 @@ export type AppAction =
   | { type: "SET_FILTER_STAGE"; payload: string }
   | { type: "SET_FILTER_ROLE"; payload: string }
   | { type: "SELECT_CANDIDATE"; payload: Candidate | null }
-  | { type: "SELECT_POOL_CANDIDATE"; payload: PoolCandidate | null }
   | { type: "SET_SHOW_ADD_MODAL"; payload: boolean }
   | { type: "SET_SHOW_JOB_MODAL"; payload: boolean }
   | { type: "SET_EDIT_JOB"; payload: Job | null }
-  | { type: "SET_NQ_CANDIDATE"; payload: Candidate | null }
-  | { type: "SET_NQ_ACTION"; payload: "endorse" | null }
-  | { type: "SET_NQ_JOB"; payload: string }
   | { type: "TOGGLE_FILL_TAG"; payload: { jobId: number; tag: FillTag } }
   | { type: "MOVE_STAGE"; payload: { id: number; stage: string } }
   | { type: "UPDATE_CANDIDATE"; payload: { id: number; updates: Partial<Candidate> } }
   | { type: "ADD_CANDIDATE"; payload: Candidate }
-  | { type: "ENDORSE_CANDIDATE"; payload: { candidate: Candidate; jobId: number } }
-  | { type: "REACTIVATE_POOL"; payload: { poolCandidate: PoolCandidate; jobId: number } }
-  | { type: "MARK_NOT_QUALIFIED"; payload: Candidate }
-  | { type: "ADD_TO_POOL"; payload: Candidate }
-  | { type: "NQ_ENDORSE"; payload: { candidate: Candidate; jobId: number } }
+  | { type: "SET_API_CANDIDATES"; payload: Candidate[] }
   | { type: "ADD_JOB"; payload: Job }
   | { type: "UPDATE_JOB"; payload: Job }
   | { type: "DELETE_JOB"; payload: { id: number; source?: "api" } }
   | { type: "SET_API_JOBS"; payload: Job[] }
   | { type: "ADD_TOAST"; payload: Toast }
   | { type: "REMOVE_TOAST"; payload: string };
-
-/* ─── Helpers ─── */
-
-function formatDate(): string {
-  return new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 
 /* ─── Reducer ─── */
 
@@ -108,20 +80,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, filterRole: action.payload };
     case "SELECT_CANDIDATE":
       return { ...state, selectedCandidate: action.payload };
-    case "SELECT_POOL_CANDIDATE":
-      return { ...state, selectedPoolCandidate: action.payload };
     case "SET_SHOW_ADD_MODAL":
       return { ...state, showAddModal: action.payload };
     case "SET_SHOW_JOB_MODAL":
       return { ...state, showJobModal: action.payload };
     case "SET_EDIT_JOB":
       return { ...state, editJob: action.payload };
-    case "SET_NQ_CANDIDATE":
-      return { ...state, nqCandidate: action.payload, nqAction: null, nqJob: "" };
-    case "SET_NQ_ACTION":
-      return { ...state, nqAction: action.payload };
-    case "SET_NQ_JOB":
-      return { ...state, nqJob: action.payload };
 
     case "TOGGLE_FILL_TAG": {
       const { jobId, tag } = action.payload;
@@ -133,6 +97,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     /* ── Candidate Mutations ── */
+    case "SET_API_CANDIDATES":
+      return { ...state, candidates: action.payload };
+
+    case "ADD_CANDIDATE":
+      return {
+        ...state,
+        candidates: [action.payload, ...state.candidates],
+        showAddModal: false,
+      };
+
     case "MOVE_STAGE": {
       const { id, stage } = action.payload;
       const candidates = state.candidates.map((c) =>
@@ -155,164 +129,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
           ? { ...state.selectedCandidate, ...updates }
           : state.selectedCandidate;
       return { ...state, candidates, selectedCandidate };
-    }
-
-    case "ADD_CANDIDATE":
-      return {
-        ...state,
-        candidates: [action.payload, ...state.candidates],
-        showAddModal: false,
-      };
-
-    case "ENDORSE_CANDIDATE": {
-      const { candidate: c, jobId } = action.payload;
-      const job = state.jobs.find((j) => j.id === jobId);
-      if (!job) return state;
-
-      const endorsed: Candidate = {
-        id: Date.now(),
-        name: c.name,
-        email: c.email,
-        role: job.title,
-        stage: "Screening",
-        rating: c.rating,
-        applied: formatDate(),
-        avatar: c.avatar,
-        tags: [...c.tags],
-        source: "Endorsed",
-        jobId,
-        recruiter: c.recruiter || "",
-        notes: "",
-        resumeName: "",
-        talents: c.talents || [],
-        examResultName: "",
-        endorsedFrom: c.role,
-      };
-      return {
-        ...state,
-        candidates: [endorsed, ...state.candidates],
-        selectedCandidate: null,
-      };
-    }
-
-    case "REACTIVATE_POOL": {
-      const { poolCandidate: pc, jobId } = action.payload;
-      const job = state.jobs.find((j) => j.id === jobId);
-      if (!job) return state;
-
-      const reactivated: Candidate = {
-        id: Date.now(),
-        name: pc.name,
-        email: pc.email,
-        role: job.title,
-        stage: "Screening",
-        rating: pc.rating,
-        applied: formatDate(),
-        avatar: pc.avatar,
-        tags: [...pc.tags],
-        source: "Talent Pool",
-        jobId,
-        recruiter: "",
-        notes: "",
-        resumeName: "",
-        talents: pc.talents || [],
-        examResultName: "",
-      };
-      return {
-        ...state,
-        candidates: [reactivated, ...state.candidates],
-        pool: state.pool.filter((p) => p.id !== pc.id),
-        selectedPoolCandidate: null,
-      };
-    }
-
-    case "MARK_NOT_QUALIFIED": {
-      const c = action.payload;
-      const candidates = state.candidates.map((x) =>
-        x.id === c.id
-          ? {
-              ...x,
-              stage: "Rejected" as const,
-              notes: (x.notes ? x.notes + "\n" : "") + "Tagged as Not Qualified.",
-            }
-          : x
-      );
-      return { ...state, candidates };
-    }
-
-    case "ADD_TO_POOL": {
-      const c = action.payload;
-      const poolEntry: PoolCandidate = {
-        id: Date.now(),
-        name: c.name,
-        role: c.role,
-        lastStage: c.stage,
-        rating: c.rating,
-        applied: c.applied,
-        email: c.email,
-        avatar: c.avatar,
-        tags: [...c.tags],
-        source: c.source,
-        jobId: c.jobId,
-        closedJob: c.role,
-        pooledDate: formatDate(),
-        notes:
-          (c.notes ? c.notes + "\n" : "") +
-          "Not Qualified for " +
-          c.role +
-          ". Added to talent pool.",
-        talents: c.talents || [],
-      };
-      return {
-        ...state,
-        pool: [...state.pool, poolEntry],
-        candidates: state.candidates.filter((x) => x.id !== c.id),
-      };
-    }
-
-    case "NQ_ENDORSE": {
-      const { candidate: c, jobId } = action.payload;
-      const job = state.jobs.find((j) => j.id === jobId);
-      if (!job) return state;
-
-      // Mark as rejected
-      const candidates = state.candidates.map((x) =>
-        x.id === c.id
-          ? {
-              ...x,
-              stage: "Rejected" as const,
-              notes: (x.notes ? x.notes + "\n" : "") + "Tagged as Not Qualified.",
-            }
-          : x
-      );
-
-      // Create endorsed entry
-      const endorsed: Candidate = {
-        id: Date.now(),
-        name: c.name,
-        email: c.email,
-        role: job.title,
-        stage: "Screening",
-        rating: c.rating,
-        applied: formatDate(),
-        avatar: c.avatar,
-        tags: [...c.tags],
-        source: "Endorsed",
-        jobId,
-        recruiter: c.recruiter || "",
-        notes: "Endorsed from " + c.role + " (Not Qualified)",
-        resumeName: "",
-        talents: c.talents || [],
-        examResultName: "",
-        endorsedFrom: c.role,
-      };
-      return {
-        ...state,
-        candidates: [endorsed, ...candidates],
-        nqCandidate: null,
-        nqAction: null,
-        nqJob: "",
-      };
     }
 
     /* ── Job Mutations ── */
@@ -393,15 +209,21 @@ export const AppProvider: FC<AppProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   // On mount: if a valid token exists (page refresh while logged in),
-  // fetch any API-persisted jobs and merge them with the seeded data.
+  // fetch API-persisted jobs and candidates.
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
+
+    const errorToast = (message: string) =>
+      dispatch({ type: "ADD_TOAST", payload: { id: Date.now().toString(), message, variant: "error" } });
+
     listJobs()
       .then((apiJobs) => dispatch({ type: "SET_API_JOBS", payload: apiJobs }))
-      .catch(() => {
-        // Silently fail — seeded jobs remain visible
-      });
+      .catch(() => errorToast("Failed to load jobs. Please refresh."));
+
+    listCandidates()
+      .then((candidates) => dispatch({ type: "SET_API_CANDIDATES", payload: candidates }))
+      .catch(() => errorToast("Failed to load candidates. Please refresh."));
   }, []);
 
   return (

@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer, EmailTokenObtainPairSerializer
+from .serializers import RegisterSerializer, UserSerializer, EmailTokenObtainPairSerializer, UserListSerializer
 
 
 class RegisterView(generics.CreateAPIView):
@@ -30,3 +30,11 @@ class MeView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class UserListView(generics.ListAPIView):
+    serializer_class = UserListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(is_active=True).order_by("first_name", "last_name")

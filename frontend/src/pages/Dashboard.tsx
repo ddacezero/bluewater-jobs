@@ -8,12 +8,14 @@ import { useApp } from "../context/AppContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { PIPELINE_STAGES, STAGE_COLORS } from "../data/constants";
 import { PlusIcon, UpIcon } from "../components/icons";
+import type { Candidate } from "../data/types";
 
 const Dashboard: FC = () => {
   const { state, dispatch } = useApp();
   const mob = useMobile();
 
-  const { candidates, pool, jobs } = state;
+  const { candidates, jobs } = state;
+  const pool = candidates.filter((c) => c.is_pooled);
   const activeJobs = jobs.filter((j) => j.status === "Active");
   const stageCount = (s: string) => candidates.filter((c) => c.stage === s).length;
 
@@ -32,7 +34,7 @@ const Dashboard: FC = () => {
       label: "Talent Pool",
       value: pool.length,
       accent: "#8E24AA",
-      change: `${pool.filter((p) => p.rating >= 4).length} top`,
+      change: `${pool.filter((p: Candidate) => p.rating >= 4).length} top`,
     },
   ];
 

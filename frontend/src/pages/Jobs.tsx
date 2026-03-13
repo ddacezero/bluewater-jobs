@@ -51,7 +51,7 @@ const Jobs: FC = () => {
           // until candidates are also persisted to the backend.
           const jc =
             j.source !== "api"
-              ? candidates.filter((c) => c.jobId === j.id)
+              ? candidates.filter((c) => c.job.id === j.id)
               : [];
           return (
             <div

@@ -18,11 +18,11 @@ const Candidates: FC = () => {
 
   const { candidates, filterStage, filterRole } = state;
 
-  const roles = [...new Set(candidates.map((c) => c.role))];
+  const roles = [...new Set(candidates.map((c) => c.job?.title ?? "—"))];
 
   const filtered = candidates.filter((c) => {
     const matchStage = filterStage === "All" || c.stage === filterStage;
-    const matchRole = filterRole === "All" || c.role === filterRole;
+    const matchRole = filterRole === "All" || (c.job?.title ?? "—") === filterRole;
     return matchStage && matchRole;
   });
 
@@ -76,34 +76,42 @@ const Candidates: FC = () => {
       {/* Table / Card List */}
       {mob ? (
         <div className="flex flex-col gap-3">
-          {filtered.map((c) => (
-            <div
-              key={c.id}
-              className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] p-4 shadow-[var(--shadow-card)] cursor-pointer transition-all duration-200 hover:shadow-[var(--shadow-card-hover)]"
-              onClick={() => dispatch({ type: "SELECT_CANDIDATE", payload: c })}
-            >
-              <div className="flex items-center gap-3 mb-2.5">
-                <Avatar initials={c.avatar} size="md" />
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">{c.name}</div>
-                  <div className="text-xs text-[var(--color-text-muted)] truncate">{c.role}</div>
+          {filtered.map((c) => {
+            const initials = (c.application?.name ?? "Unknown")
+              .split(" ")
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2);
+            return (
+              <div
+                key={c.id}
+                className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] p-4 shadow-[var(--shadow-card)] cursor-pointer transition-all duration-200 hover:shadow-[var(--shadow-card-hover)]"
+                onClick={() => dispatch({ type: "SELECT_CANDIDATE", payload: c })}
+              >
+                <div className="flex items-center gap-3 mb-2.5">
+                  <Avatar initials={initials} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm truncate">{c.application?.name ?? "Unknown"}</div>
+                    <div className="text-xs text-[var(--color-text-muted)] truncate">{c.job?.title ?? "—"}</div>
+                  </div>
+                  <Stars value={c.rating} />
                 </div>
-                <Stars value={c.rating} />
-              </div>
-              <div className="flex gap-2 flex-wrap items-center">
-                <Badge stage={c.stage} />
-                {c.recruiter && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-[var(--color-primary)] font-medium">
-                    <PersonIcon />
-                    {c.recruiter}
+                <div className="flex gap-2 flex-wrap items-center">
+                  <Badge stage={c.stage} />
+                  {c.recruiter && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[var(--color-primary)] font-medium">
+                      <PersonIcon />
+                      {c.recruiter.name}
+                    </span>
+                  )}
+                  <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-sm)] px-2.5 py-0.5 text-[11px] font-semibold">
+                    {c.application?.source ?? "—"}
                   </span>
-                )}
-                <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-sm)] px-2.5 py-0.5 text-[11px] font-semibold">
-                  {c.source}
-                </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] shadow-[var(--shadow-card)] overflow-auto">
@@ -121,58 +129,66 @@ const Candidates: FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c) => (
-                <tr
-                  key={c.id}
-                  className="border-b border-[var(--color-surface-border-light)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors duration-150"
-                  onClick={() => dispatch({ type: "SELECT_CANDIDATE", payload: c })}
-                >
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={c.avatar} size="md" />
-                      <div>
-                        <div className="font-semibold text-[13.5px] text-[var(--color-text-heading)]">
-                          {c.name}
+              {filtered.map((c) => {
+                const initials = (c.application?.name ?? "Unknown")
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2);
+                return (
+                  <tr
+                    key={c.id}
+                    className="border-b border-[var(--color-surface-border-light)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors duration-150"
+                    onClick={() => dispatch({ type: "SELECT_CANDIDATE", payload: c })}
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <Avatar initials={initials} size="md" />
+                        <div>
+                          <div className="font-semibold text-[13.5px] text-[var(--color-text-heading)]">
+                            {c.application?.name ?? "Unknown"}
+                          </div>
+                          <div className="text-[11.5px] text-[var(--color-text-muted)]">{c.application?.email ?? ""}</div>
                         </div>
-                        <div className="text-[11.5px] text-[var(--color-text-muted)]">{c.email}</div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-[13px] text-[var(--color-text-subtle)]">{c.role}</td>
-                  <td className="px-5 py-3.5">
-                    <Badge stage={c.stage} />
-                  </td>
-                  <td className="px-5 py-3.5">
-                    {c.recruiter ? (
-                      <span className="text-[13px] text-[var(--color-primary)] inline-flex items-center gap-1.5">
-                        <PersonIcon />
-                        {c.recruiter}
+                    </td>
+                    <td className="px-5 py-3.5 text-[13px] text-[var(--color-text-subtle)]">{c.job?.title ?? "—"}</td>
+                    <td className="px-5 py-3.5">
+                      <Badge stage={c.stage} />
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {c.recruiter ? (
+                        <span className="text-[13px] text-[var(--color-primary)] inline-flex items-center gap-1.5">
+                          <PersonIcon />
+                          {c.recruiter.name}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Stars value={c.rating} />
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-sm)] px-2.5 py-1 text-[11px] font-semibold">
+                        {c.application?.source ?? "—"}
                       </span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <Stars value={c.rating} />
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-sm)] px-2.5 py-1 text-[11px] font-semibold">
-                      {c.source}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <button
-                      className="text-[var(--color-primary)] bg-transparent border-none text-[13px] font-semibold cursor-pointer hover:underline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        dispatch({ type: "SELECT_CANDIDATE", payload: c });
-                      }}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        className="text-[var(--color-primary)] bg-transparent border-none text-[13px] font-semibold cursor-pointer hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dispatch({ type: "SELECT_CANDIDATE", payload: c });
+                        }}
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
