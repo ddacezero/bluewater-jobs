@@ -22,10 +22,7 @@ export type Source =
   | "Indeed"
   | "Referral"
   | "Endorsed"
-  | "Talent Pool"
   | "Other";
-
-export type Recruiter = "Joela" | "Ranie";
 
 export type Location =
   | "Bluewater Maribago"
