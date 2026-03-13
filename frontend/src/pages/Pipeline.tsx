@@ -9,7 +9,6 @@ import { useMobile } from "../hooks/useMediaQuery";
 import { PIPELINE_STAGES, STAGE_COLORS } from "../data/constants";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
-import { BanIcon } from "../components/icons";
 
 const Pipeline: FC = () => {
   const { state, dispatch } = useApp();
@@ -51,50 +50,38 @@ const Pipeline: FC = () => {
 
               {/* Cards */}
               <div className="flex flex-col gap-2.5">
-                {items.map((c) => (
-                  <div
-                    key={c.id}
-                    className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] p-3.5 shadow-[var(--shadow-card)] cursor-pointer transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5"
-                    style={{ borderLeft: `3px solid ${sc.dot}` }}
-                    onClick={() => dispatch({ type: "SELECT_CANDIDATE", payload: c })}
-                  >
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <Avatar initials={c.avatar} size="sm" />
-                      <div className="min-w-0">
-                        <div className="font-semibold text-[12.5px] text-[var(--color-text-heading)] truncate">
-                          {c.name}
-                        </div>
-                        <div className="text-[10.5px] text-[var(--color-text-muted)] truncate">
-                          {c.recruiter || c.role}
+                {items.map((c) => {
+                  const initials = c.application.name
+                    .split(" ")
+                    .map((w) => w[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2);
+
+                  return (
+                    <div
+                      key={c.id}
+                      className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] p-3.5 shadow-[var(--shadow-card)] cursor-pointer transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5"
+                      style={{ borderLeft: `3px solid ${sc.dot}` }}
+                      onClick={() => dispatch({ type: "SELECT_CANDIDATE", payload: c })}
+                    >
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <Avatar initials={initials} size="sm" />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-[12.5px] text-[var(--color-text-heading)] truncate">
+                            {c.application.name}
+                          </div>
+                          <div className="text-[10.5px] text-[var(--color-text-muted)] truncate">
+                            {c.recruiter?.name ?? "Unassigned"} — {c.job.title}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex justify-between items-center">
+                        <Stars value={c.rating} />
+                      </div>
                     </div>
-                    <div className="flex gap-1 flex-wrap mb-2">
-                      {c.tags.slice(0, 2).map((t) => (
-                        <span
-                          key={t}
-                          className="bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-sm)] px-1.5 py-0.5 text-[9px] font-semibold"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <Stars value={c.rating} />
-                      {stage === "Applied" && (
-                        <button
-                          className="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-[var(--radius-sm)] px-2 py-0.5 text-[10px] font-semibold text-[var(--color-danger-dark)] cursor-pointer flex items-center gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            dispatch({ type: "SET_NQ_CANDIDATE", payload: c });
-                          }}
-                        >
-                          <BanIcon /> NQ
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {items.length === 0 && (
                   <div className="p-6 text-center text-[var(--color-text-placeholder)] text-xs border-2 border-dashed border-[#DDE8F0] rounded-[var(--radius-md)]">
                     Empty
