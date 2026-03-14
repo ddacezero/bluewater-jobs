@@ -37,4 +37,7 @@ class UserListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return User.objects.filter(is_active=True).order_by("first_name", "last_name")
+        return User.objects.filter(
+            is_active=True,
+            role__in=["talent_acquisition_specialist", "talent_acquisition_manager"],
+        ).order_by("first_name", "last_name")

@@ -61,6 +61,18 @@ export async function updateCandidate(
   return res.json();
 }
 
+export async function uploadExamResult(id: number, file: File): Promise<Candidate> {
+  const fd = new FormData();
+  fd.append("exam_result", file);
+  const res = await fetch(`${API_BASE}/${id}/`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: fd,
+  });
+  if (!res.ok) throw new Error("Failed to upload exam result.");
+  return res.json();
+}
+
 export async function deleteCandidate(id: number): Promise<void> {
   const res = await fetch(`${API_BASE}/${id}/`, {
     method: "DELETE",

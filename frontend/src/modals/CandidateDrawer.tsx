@@ -3,7 +3,7 @@
  * resume/exam display, stage mover, rating, and pool action.
  */
 
-import { useState, useRef, type FC } from "react";
+import { useState, useRef, useEffect, type FC } from "react";
 import { useApp } from "../context/AppContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { STAGES, STAGE_COLORS } from "../data/constants";
@@ -13,8 +13,13 @@ import {
   XIcon, NoteIcon, UploadIcon, DownloadIcon,
   EndorseIcon, ClipboardIcon, PoolIcon, StarIcon,
 } from "../components/icons";
-import { updateCandidate } from "../api/candidates";
+import { updateCandidate, uploadExamResult } from "../api/candidates";
 import type { Stage } from "../data/types";
+
+interface UserOption {
+  id: number;
+  name: string;
+}
 
 const CandidateDrawer: FC = () => {
   const { state, dispatch } = useApp();
@@ -25,6 +30,16 @@ const CandidateDrawer: FC = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const examRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [recruiters, setRecruiters] = useState<UserOption[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    fetch("http://localhost:8000/api/auth/users/", { headers })
+      .then((r) => r.json())
+      .then(setRecruiters)
+      .catch(() => {});
+  }, []);
 
   const { selectedCandidate: selC, candidates } = state;
   if (!selC) return null;
@@ -124,8 +139,37 @@ const CandidateDrawer: FC = () => {
     // the application endpoint.
   };
 
-  const handleExam = (_e: React.ChangeEvent<HTMLInputElement>) => {
-    // Exam result upload not supported via this drawer in the current API shape.
+  const handleExam = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const updated = await uploadExamResult(c.id, file);
+      dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { exam_result: updated.exam_result } } });
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to upload exam result.", variant: "error" },
+      });
+    } finally {
+      setLoading(false);
+      if (examRef.current) examRef.current.value = "";
+    }
+  };
+
+  const handleRecruiter = async (recruiter_id: number | null) => {
+    setLoading(true);
+    try {
+      const updated = await updateCandidate(c.id, { recruiter_id });
+      dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { recruiter: updated.recruiter } } });
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to update recruiter.", variant: "error" },
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -209,9 +253,17 @@ const CandidateDrawer: FC = () => {
                 <span className="text-[10px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
                   Recruiter
                 </span>
-                <p className="mt-1 text-[13.5px] font-semibold text-[var(--color-primary)]">
-                  {c.recruiter?.name ?? "Unassigned"}
-                </p>
+                <select
+                  className="mt-1 text-[13.5px] font-semibold text-[var(--color-primary)] bg-transparent border-none outline-none cursor-pointer w-full p-0"
+                  value={c.recruiter?.id ?? ""}
+                  onChange={(e) => handleRecruiter(e.target.value ? Number(e.target.value) : null)}
+                  disabled={loading}
+                >
+                  <option value="">Unassigned</option>
+                  {recruiters.map((r) => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

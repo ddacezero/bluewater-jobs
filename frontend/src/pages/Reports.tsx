@@ -7,7 +7,7 @@ import { useState, type FC } from "react";
 import { useApp } from "../context/AppContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { STAGES, STAGE_COLORS, REPORT_MONTHS } from "../data/constants";
-import type { Job, Candidate } from "../data/types";
+import type { Job } from "../data/types";
 import { DownloadIcon } from "../components/icons";
 
 const Reports: FC = () => {
@@ -18,7 +18,6 @@ const Reports: FC = () => {
   const [repMonth, setRepMonth] = useState("all");
 
   const { candidates, jobs, fillTags } = state;
-  const pool = candidates.filter((c) => c.is_pooled);
 
   const jobsToReport =
     repJob === "all" ? jobs : jobs.filter((j) => j.id === Number(repJob));
@@ -30,10 +29,7 @@ const Reports: FC = () => {
   };
 
   const getStats = (job: Job, month: string) => {
-    let all = [
-      ...candidates.filter((c) => c.job.id === job.id),
-      ...pool.filter((p: Candidate) => p.job.id === job.id),
-    ];
+    let all = candidates.filter((c) => c.job.id === job.id);
     if (month !== "all") {
       all = all.filter((c) => {
         const d = (c.is_pooled ? c.pooled_at : c.created_at) ?? "";
@@ -125,10 +121,7 @@ const Reports: FC = () => {
     });
     csv += "\n\nCandidate Details\nName,Email,Role,Stage,Rating,Applied,Recruiter,Source\n";
     jobsToReport.forEach((job) => {
-      [
-        ...candidates.filter((c) => c.job.id === job.id),
-        ...pool.filter((p: Candidate) => p.job.id === job.id),
-      ].forEach((c) => {
+      candidates.filter((c) => c.job.id === job.id).forEach((c) => {
         const stage = c.stage;
         const applied = c.is_pooled ? (c.pooled_at ?? "") : (c.created_at ?? "");
         const recruiter = c.recruiter ? c.recruiter.name : "";

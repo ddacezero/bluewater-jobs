@@ -101,6 +101,15 @@ class CandidateSerializer(serializers.ModelSerializer):
     application = ApplicationNestedSerializer(read_only=True)
     job = JobTrimmedSerializer(read_only=True)
     recruiter = RecruiterSerializer(read_only=True)
+    recruiter_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(
+            role__in=["talent_acquisition_specialist", "talent_acquisition_manager"]
+        ),
+        source="recruiter",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = Candidate
@@ -109,6 +118,7 @@ class CandidateSerializer(serializers.ModelSerializer):
             "stage",
             "rating",
             "recruiter",
+            "recruiter_id",
             "notes",
             "exam_result",
             "endorsed_from",

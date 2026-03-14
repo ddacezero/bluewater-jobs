@@ -7,7 +7,7 @@ import type { FC } from "react";
 import { useApp } from "../context/AppContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { PIPELINE_STAGES, STAGE_COLORS } from "../data/constants";
-import { PlusIcon, UpIcon } from "../components/icons";
+import { UpIcon } from "../components/icons";
 import type { Candidate } from "../data/types";
 
 const Dashboard: FC = () => {
@@ -48,13 +48,6 @@ const Dashboard: FC = () => {
           </h1>
           <p className="text-[var(--color-text-secondary)] mt-1 text-[13px]">Your hiring overview</p>
         </div>
-        <button
-          className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold inline-flex items-center gap-1.5 shadow-[var(--shadow-btn)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-primary-hover)] active:scale-[0.98]"
-          onClick={() => dispatch({ type: "SET_SHOW_ADD_MODAL", payload: true })}
-        >
-          <PlusIcon />
-          {mob ? "Add" : "Add Candidate"}
-        </button>
       </div>
 
       {/* Stat Cards — always 4 columns on desktop, 2 on mobile */}

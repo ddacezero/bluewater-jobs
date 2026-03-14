@@ -19,10 +19,12 @@ const Pipeline: FC = () => {
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
 
   const activeJobs = jobs.filter((j) => j.status === "Active" && j.source === "api");
-  const effectiveJobId = selectedJobId ?? activeJobs[0]?.id ?? null;
-  const filteredCandidates = effectiveJobId
-    ? candidates.filter((c) => c.job?.id === effectiveJobId)
-    : candidates;
+  // selectedJobId === null means "All"
+  const filteredCandidates = (
+    selectedJobId !== null
+      ? candidates.filter((c) => c.job?.id === selectedJobId)
+      : candidates
+  ).filter((c) => !c.is_pooled);
 
   return (
     <div className="animate-fade-in">
@@ -43,9 +45,10 @@ const Pipeline: FC = () => {
           </label>
           <select
             className="text-[13px] px-3 py-1.5 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[var(--color-text-primary)] outline-none cursor-pointer focus:border-[var(--color-primary)]"
-            value={effectiveJobId ?? ""}
+            value={selectedJobId ?? ""}
             onChange={(e) => setSelectedJobId(e.target.value ? Number(e.target.value) : null)}
           >
+            <option value="">All Jobs</option>
             {activeJobs.map((j) => (
               <option key={j.id} value={j.id}>{j.title}</option>
             ))}
@@ -56,7 +59,7 @@ const Pipeline: FC = () => {
         </div>
       )}
 
-      <div className="flex gap-4 overflow-x-auto pb-6">
+      <div className="flex gap-4 overflow-x-auto overflow-y-auto pb-2" style={{ height: "calc(100vh - 220px)" }}>
         {PIPELINE_STAGES.map((stage) => {
           const items = filteredCandidates.filter((c) => c.stage === stage);
           const sc = STAGE_COLORS[stage];
