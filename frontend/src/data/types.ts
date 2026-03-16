@@ -78,9 +78,17 @@ export interface Candidate {
   endorsed_from: string | null;
   is_pooled: boolean;
   pooled_at: string | null;
+  stage_timestamps: Record<string, string>;
   created_at: string;
   application: ApplicationNested;
   job: JobNested;
+}
+
+export interface CandidateNote {
+  id: number;
+  author_name: string;
+  content: string;
+  created_at: string;
 }
 
 export interface Job {

@@ -179,7 +179,7 @@ const Reports: FC = () => {
             ))}
           </select>
           <button
-            className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-4 py-2.5 text-[13px] font-semibold inline-flex items-center gap-1.5 shadow-[var(--shadow-btn)] cursor-pointer hover:bg-[var(--color-primary-hover)] transition-colors"
+            className="bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)] rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold inline-flex items-center gap-1.5 shadow-[var(--shadow-btn)] cursor-pointer hover:bg-[var(--color-btn-primary-hover)] transition-colors"
             onClick={exportCSV}
           >
             <DownloadIcon />

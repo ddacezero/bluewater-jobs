@@ -1,7 +1,8 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from core.models import User
-from .models import Candidate, Job, JobApplication
+from .models import Candidate, CandidateNote, Job, JobApplication
 
 
 class JobSerializer(serializers.ModelSerializer):
@@ -124,11 +125,34 @@ class CandidateSerializer(serializers.ModelSerializer):
             "endorsed_from",
             "is_pooled",
             "pooled_at",
+            "stage_timestamps",
             "created_at",
             "application",
             "job",
         )
-        read_only_fields = ("id", "pooled_at", "created_at", "application", "job")
+        read_only_fields = ("id", "pooled_at", "stage_timestamps", "created_at", "application", "job")
+
+    def update(self, instance, validated_data):
+        new_stage = validated_data.get("stage", instance.stage)
+        if new_stage != instance.stage:
+            timestamps = dict(instance.stage_timestamps or {})
+            timestamps[new_stage] = timezone.now().isoformat()
+            instance.stage_timestamps = timestamps
+        return super().update(instance, validated_data)
+
+
+class CandidateNoteSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CandidateNote
+        fields = ("id", "author_name", "content", "created_at")
+        read_only_fields = ("id", "author_name", "created_at")
+
+    def get_author_name(self, obj) -> str:
+        if obj.author:
+            return obj.author.get_full_name() or obj.author.email
+        return "Unknown"
 
 
 class CandidateCreateSerializer(serializers.Serializer):

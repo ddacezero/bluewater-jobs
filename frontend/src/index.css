@@ -78,6 +78,11 @@
   --shadow-btn: 0 2px 8px rgba(31, 117, 185, 0.25);
   --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.18), 0 8px 20px rgba(0, 0, 0, 0.08);
   --shadow-sidebar: 4px 0 24px rgba(0, 0, 0, 0.12);
+
+  /* Primary button tokens — swap in dark mode */
+  --color-btn-primary-bg: #1f75b9;
+  --color-btn-primary-text: #ffffff;
+  --color-btn-primary-hover: #1a6aaa;
 }
 
 /* Base resets */
@@ -140,6 +145,11 @@ body {
   --shadow-card-hover: 0 4px 14px rgba(31, 117, 185, 0.25), 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.6), 0 8px 20px rgba(0, 0, 0, 0.4);
   --shadow-sidebar: 4px 0 24px rgba(0, 0, 0, 0.5);
+
+  /* Primary button — white bg / primary text in dark mode */
+  --color-btn-primary-bg: #ffffff;
+  --color-btn-primary-text: #1f75b9;
+  --color-btn-primary-hover: #e8f3fb;
 }
 
 [data-theme="dark"] body {

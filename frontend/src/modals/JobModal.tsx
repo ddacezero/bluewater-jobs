@@ -321,7 +321,7 @@ const JobModal: FC = () => {
                 </button>
                 <button
                   disabled={saving}
-                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)] rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer hover:bg-[var(--color-btn-primary-hover)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   onClick={save}
                 >
                   {saving ? "Saving…" : isEdit ? "Save Changes" : "Post Job"}

@@ -310,7 +310,7 @@ const Careers: FC = () => {
                     onClick={() => setPage(pageNumber)}
                     className={`h-10 min-w-10 rounded-[var(--radius-md)] px-3 text-sm font-bold ${
                       pageNumber === page
-                        ? "bg-[var(--color-primary)] text-white"
+                        ? "bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)]"
                         : "border border-[var(--color-surface-border)] bg-white text-[var(--color-text-secondary)]"
                     }`}
                   >
@@ -467,7 +467,7 @@ const Careers: FC = () => {
                   type="button"
                   onClick={handleApply}
                   disabled={submitLoading}
-                  className="mt-6 w-full rounded-[var(--radius-full)] bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white shadow-[var(--shadow-btn)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-6 w-full rounded-[var(--radius-full)] bg-[var(--color-btn-primary-bg)] px-5 py-3 text-sm font-bold text-[var(--color-btn-primary-text)] shadow-[var(--shadow-btn)] transition-colors hover:bg-[var(--color-btn-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitLoading ? "Submitting..." : "Apply"}
                 </button>

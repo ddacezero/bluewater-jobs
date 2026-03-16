@@ -1,6 +1,6 @@
 /**
  * Candidate Drawer — full candidate detail modal with notes editing,
- * resume/exam display, stage mover, rating, and pool action.
+ * resume/exam display, stage mover, rating, pool action, and stage history timeline.
  */
 
 import { useState, useRef, useEffect, type FC } from "react";
@@ -13,8 +13,9 @@ import {
   XIcon, NoteIcon, UploadIcon, DownloadIcon,
   EndorseIcon, ClipboardIcon, PoolIcon, StarIcon,
 } from "../components/icons";
-import { updateCandidate, uploadExamResult } from "../api/candidates";
-import type { Stage } from "../data/types";
+import { updateCandidate, uploadExamResult, listNotes, createNote } from "../api/candidates";
+import { formatPHT } from "../data/utils";
+import type { CandidateNote } from "../data/types";
 
 interface UserOption {
   id: number;
@@ -25,8 +26,9 @@ const CandidateDrawer: FC = () => {
   const { state, dispatch } = useApp();
   const mob = useMobile();
 
-  const [editNotes, setEditNotes] = useState(false);
-  const [notesDraft, setNotesDraft] = useState("");
+  const [notes, setNotes] = useState<CandidateNote[]>([]);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [notesLoading, setNotesLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const examRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,15 @@ const CandidateDrawer: FC = () => {
   }, []);
 
   const { selectedCandidate: selC, candidates } = state;
+
+  // Fetch notes whenever the selected candidate changes (must be before early returns)
+  useEffect(() => {
+    if (!selC) return;
+    listNotes(selC.id)
+      .then(setNotes)
+      .catch(() => {});
+  }, [selC?.id]);
+
   if (!selC) return null;
 
   const c = candidates.find((x) => x.id === selC.id) || selC;
@@ -49,7 +60,21 @@ const CandidateDrawer: FC = () => {
   // Only show for non-pooled candidates
   if (c.is_pooled) return null;
 
-  const nextStages = STAGES.filter((s) => s !== c.stage && s !== "Rejected");
+  const recentNotes = notes.slice(0, 3);
+
+  // Build effective timestamps: "Applied" falls back to application.created_at
+  // so pre-existing candidates always show their application date.
+  const effectiveTimestamps: Record<string, string> = {
+    ...(c.application.created_at ? { Applied: c.application.created_at } : {}),
+    ...(c.stage_timestamps ?? {}),
+  };
+  // Sort chronologically (oldest → newest) and keep the 5 most recent entries.
+  const stagesWithTimestamp = STAGES
+    .filter((s) => effectiveTimestamps[s])
+    .sort((a, b) =>
+      new Date(effectiveTimestamps[a]).getTime() - new Date(effectiveTimestamps[b]).getTime()
+    )
+    .slice(-5);
 
   const initials = c.application.name
     .split(" ")
@@ -68,37 +93,23 @@ const CandidateDrawer: FC = () => {
 
   const close = () => {
     dispatch({ type: "SELECT_CANDIDATE", payload: null });
-    setEditNotes(false);
   };
 
-  const saveNotes = async () => {
-    setLoading(true);
+  const handleAddNote = async () => {
+    const content = noteDraft.trim();
+    if (!content) return;
+    setNotesLoading(true);
     try {
-      await updateCandidate(c.id, { notes: notesDraft });
-      dispatch({ type: "UPDATE_CANDIDATE", payload: { id: c.id, updates: { notes: notesDraft } } });
-      setEditNotes(false);
+      const note = await createNote(c.id, content);
+      setNotes((prev) => [note, ...prev]);
+      setNoteDraft("");
     } catch {
       dispatch({
         type: "ADD_TOAST",
-        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
+        payload: { id: Date.now().toString(), message: "Failed to save note.", variant: "error" },
       });
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMoveStage = async (stage: Stage) => {
-    setLoading(true);
-    try {
-      await updateCandidate(c.id, { stage });
-      dispatch({ type: "MOVE_STAGE", payload: { id: c.id, stage } });
-    } catch {
-      dispatch({
-        type: "ADD_TOAST",
-        payload: { id: Date.now().toString(), message: "Failed to save changes.", variant: "error" },
-      });
-    } finally {
-      setLoading(false);
+      setNotesLoading(false);
     }
   };
 
@@ -172,6 +183,7 @@ const CandidateDrawer: FC = () => {
     }
   };
 
+
   return (
     <div
       className="fixed inset-0 z-100 flex items-center justify-center bg-[rgba(10,22,40,0.5)] backdrop-blur-[3px]"
@@ -241,7 +253,9 @@ const CandidateDrawer: FC = () => {
                 <span className="text-[10px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
                   Applied
                 </span>
-                <p className="mt-1 text-[13.5px] font-semibold">{c.application.created_at}</p>
+                <p className="mt-1 text-[12px] font-semibold leading-snug">
+                  {formatPHT(c.application.created_at)}
+                </p>
               </div>
               <div>
                 <span className="text-[10px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
@@ -268,6 +282,62 @@ const CandidateDrawer: FC = () => {
             </div>
           </div>
 
+          {/* Stage History Timeline */}
+          {stagesWithTimestamp.length > 0 && (
+            <div>
+              <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide block mb-3">
+                Stage History
+              </span>
+              <div className="relative pl-5">
+                {/* Vertical line */}
+                <div
+                  className="absolute left-[7px] top-2 bottom-2 w-px"
+                  style={{ background: "var(--color-surface-muted)" }}
+                />
+                <div className="flex flex-col gap-3">
+                  {stagesWithTimestamp.map((stage, idx) => {
+                    const sc = STAGE_COLORS[stage];
+                    const isCurrent = stage === c.stage;
+                    return (
+                      <div key={stage} className="relative flex items-start gap-3">
+                        {/* Dot */}
+                        <div
+                          className="absolute -left-5 mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 z-10"
+                          style={{
+                            background: isCurrent ? sc.dot : sc.bg,
+                            borderColor: sc.dot,
+                            boxShadow: isCurrent ? `0 0 0 3px ${sc.dot}22` : "none",
+                          }}
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className="text-[12px] font-bold"
+                              style={{ color: sc.dot }}
+                            >
+                              {stage}
+                            </span>
+                            {isCurrent && (
+                              <span
+                                className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full"
+                                style={{ background: sc.bg, color: sc.text }}
+                              >
+                                Current
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                            {formatPHT(effectiveTimestamps[stage])}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Endorsed From */}
           {c.endorsed_from && (
             <div className="bg-[var(--color-primary-light)] border border-[var(--color-primary-gradient-end)] rounded-[var(--radius-md)] px-3.5 py-2.5 text-[12.5px] text-[var(--color-primary)] flex items-center gap-1.5">
@@ -277,45 +347,63 @@ const CandidateDrawer: FC = () => {
 
           {/* Notes */}
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide">
-                Notes
-              </span>
-              <button
-                className="border border-[var(--color-surface-muted)] text-[var(--color-primary)] rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold inline-flex items-center gap-1 bg-transparent cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors disabled:opacity-50"
-                disabled={loading}
-                onClick={() => {
-                  if (editNotes) {
-                    saveNotes();
-                  } else {
-                    setNotesDraft(c.notes || "");
-                    setEditNotes(true);
-                  }
+            <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide block mb-3">
+              Notes
+            </span>
+
+            {/* Add note */}
+            <div className="flex gap-2 mb-3">
+              <textarea
+                className="flex-1 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[13px] text-[var(--color-text-primary)] outline-none font-[inherit] resize-none focus:border-[var(--color-primary)] transition-colors"
+                rows={2}
+                placeholder="Write a note..."
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleAddNote();
                 }}
+                disabled={notesLoading}
+              />
+              <button
+                className="self-end border-none bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)] rounded-[var(--radius-md)] px-3 py-2 text-[12px] font-semibold cursor-pointer disabled:opacity-50 flex items-center gap-1 transition-opacity"
+                onClick={handleAddNote}
+                disabled={notesLoading || !noteDraft.trim()}
               >
                 <NoteIcon />
-                {editNotes ? (loading ? "Saving..." : "Save") : "Edit"}
+                {notesLoading ? "..." : "Add"}
               </button>
             </div>
-            {editNotes ? (
-              <textarea
-                className="w-full px-3.5 py-2.5 rounded-[var(--radius-md)] border border-[var(--color-surface-muted)] bg-[var(--color-surface)] text-[13.5px] text-[var(--color-text-primary)] outline-none font-[inherit] resize-y min-h-[80px] focus:border-[var(--color-primary)]"
-                value={notesDraft}
-                onChange={(e) => setNotesDraft(e.target.value)}
-                placeholder="Add notes..."
-                autoFocus
-              />
-            ) : (
-              <div className="bg-[var(--color-notes-bg)] border border-[var(--color-notes-border)] rounded-[var(--radius-md)] p-3 min-h-[44px]">
-                {c.notes ? (
-                  <p className="text-[13px] text-[var(--color-notes-text)] leading-relaxed whitespace-pre-wrap">
-                    {c.notes}
-                  </p>
-                ) : (
-                  <p className="text-[12.5px] text-[var(--color-text-placeholder)] italic">No notes</p>
-                )}
-              </div>
-            )}
+
+            {/* Recent notes list (top 3) */}
+            <div className="flex flex-col gap-2">
+              {recentNotes.length === 0 ? (
+                <p className="text-[12.5px] text-[var(--color-text-placeholder)] italic">No notes yet</p>
+              ) : (
+                recentNotes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="bg-[var(--color-notes-bg)] border border-[var(--color-notes-border)] rounded-[var(--radius-md)] px-3.5 py-3"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[11px] font-bold text-[var(--color-primary)] truncate">
+                        {note.author_name}
+                      </span>
+                      <span className="text-[10.5px] text-[var(--color-text-muted)] shrink-0">
+                        {formatPHT(note.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-[12.5px] text-[var(--color-notes-text)] leading-relaxed whitespace-pre-wrap">
+                      {note.content}
+                    </p>
+                  </div>
+                ))
+              )}
+              {notes.length > 3 && (
+                <p className="text-[11px] text-[var(--color-text-muted)] text-center">
+                  +{notes.length - 3} older note{notes.length - 3 !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Resume */}
@@ -343,7 +431,7 @@ const CandidateDrawer: FC = () => {
                   href={c.application.resume}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
+                  className="bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)] rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
                 >
                   <DownloadIcon />
                 </a>
@@ -378,7 +466,7 @@ const CandidateDrawer: FC = () => {
                   href={c.exam_result!}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
+                  className="bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)] rounded-[var(--radius-md)] px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
                 >
                   <DownloadIcon />
                 </a>
@@ -386,38 +474,6 @@ const CandidateDrawer: FC = () => {
             ) : (
               <p className="text-[12.5px] text-[var(--color-text-placeholder)] italic">No exam results uploaded</p>
             )}
-          </div>
-
-          {/* Move Stage */}
-          <div className="border-t border-[var(--color-surface-border)] pt-5">
-            <span className="text-[11px] text-[var(--color-text-secondary)] font-bold uppercase tracking-wide block mb-3">
-              Move Stage
-            </span>
-            <div className="flex gap-2 flex-wrap">
-              {nextStages.map((s) => (
-                <button
-                  key={s}
-                  className="rounded-[var(--radius-md)] px-3 py-1.5 text-[12px] font-semibold bg-transparent cursor-pointer transition-colors hover:bg-opacity-10 disabled:opacity-50"
-                  style={{
-                    border: `1.5px solid ${STAGE_COLORS[s].dot}`,
-                    color: STAGE_COLORS[s].text,
-                  }}
-                  disabled={loading}
-                  onClick={() => handleMoveStage(s as Stage)}
-                >
-                  {s.replace("Interview", "Int.").replace("Departmental", "Dept.")}
-                </button>
-              ))}
-              {c.stage !== "Rejected" && (
-                <button
-                  className="border border-[var(--color-danger)] text-[var(--color-danger-dark)] rounded-[var(--radius-md)] px-3 py-1.5 text-[12px] font-semibold bg-transparent cursor-pointer hover:bg-[var(--color-danger-bg)] transition-colors disabled:opacity-50"
-                  disabled={loading}
-                  onClick={() => handleMoveStage("Rejected")}
-                >
-                  Reject
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Add to Talent Pool */}

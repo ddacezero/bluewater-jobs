@@ -114,7 +114,7 @@ const PoolDrawer: FC = () => {
             </span>
             <div className={`flex gap-2.5 ${mob ? "flex-col" : ""}`}>
               <button
-                className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 hover:bg-[var(--color-primary-hover)] transition-colors"
+                className="bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)] rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold shadow-[var(--shadow-btn)] cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 hover:bg-[var(--color-btn-primary-hover)] transition-colors"
                 disabled={loading}
                 onClick={handleReactivate}
               >

@@ -1,14 +1,16 @@
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import generics, permissions
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from .models import Candidate, Job, JobApplication
+from .models import Candidate, CandidateNote, Job, JobApplication
 from .permissions import CandidatePermission, JobPermission
 from .serializers import (
     CandidateCreateSerializer,
+    CandidateNoteSerializer,
     CandidateSerializer,
     JobApplicationSerializer,
     JobSerializer,
@@ -140,6 +142,20 @@ class CandidateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CandidateSerializer
     permission_classes = [CandidatePermission]
     http_method_names = ["get", "patch", "delete", "head", "options"]
+
+class CandidateNoteListCreateView(generics.ListCreateAPIView):
+    serializer_class = CandidateNoteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return CandidateNote.objects.filter(
+            candidate_id=self.kwargs["candidate_pk"]
+        ).select_related("author")
+
+    def perform_create(self, serializer):
+        candidate = generics.get_object_or_404(Candidate, pk=self.kwargs["candidate_pk"])
+        serializer.save(candidate=candidate, author=self.request.user)
+
 
     def perform_update(self, serializer):
         instance = serializer.instance

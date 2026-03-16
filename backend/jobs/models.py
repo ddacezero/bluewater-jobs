@@ -108,6 +108,7 @@ class Candidate(models.Model):
     endorsed_from = models.CharField(max_length=200, blank=True, default="")
     is_pooled = models.BooleanField(default=False)
     pooled_at = models.DateTimeField(null=True, blank=True)
+    stage_timestamps = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -116,3 +117,20 @@ class Candidate(models.Model):
 
     def __str__(self) -> str:
         return f"{self.application.name} — {self.job.title}"
+
+
+class CandidateNote(models.Model):
+    candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name="notes_list")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="candidate_notes"
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "candidate_notes"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Note by {self.author} on {self.candidate}"

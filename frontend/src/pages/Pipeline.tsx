@@ -1,14 +1,17 @@
 /**
  * Pipeline page — Kanban board view across all hiring stages.
+ * Supports drag-and-drop to move candidates between stages.
  * Route: /pipeline
  */
 
-import { useState, type FC } from "react";
+import { useState, useRef, type FC } from "react";
 import { useApp } from "../context/AppContext";
 import { useMobile } from "../hooks/useMediaQuery";
 import { PIPELINE_STAGES, STAGE_COLORS } from "../data/constants";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
+import { updateCandidate } from "../api/candidates";
+import type { Stage } from "../data/types";
 
 const Pipeline: FC = () => {
   const { state, dispatch } = useApp();
@@ -17,14 +20,50 @@ const Pipeline: FC = () => {
   const { candidates, jobs } = state;
 
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<Stage | null>(null);
+  const dragCandidateId = useRef<number | null>(null);
 
   const activeJobs = jobs.filter((j) => j.status === "Active" && j.source === "api");
-  // selectedJobId === null means "All"
   const filteredCandidates = (
     selectedJobId !== null
       ? candidates.filter((c) => c.job?.id === selectedJobId)
       : candidates
   ).filter((c) => !c.is_pooled);
+
+  const handleDragStart = (candidateId: number) => {
+    dragCandidateId.current = candidateId;
+  };
+
+  const handleDragOver = (e: React.DragEvent, stage: Stage) => {
+    e.preventDefault();
+    setDragOverStage(stage);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverStage(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetStage: Stage) => {
+    e.preventDefault();
+    setDragOverStage(null);
+    const id = dragCandidateId.current;
+    if (id === null) return;
+
+    const candidate = candidates.find((c) => c.id === id);
+    if (!candidate || candidate.stage === targetStage) return;
+
+    try {
+      const updated = await updateCandidate(id, { stage: targetStage });
+      dispatch({ type: "UPDATE_CANDIDATE", payload: { id, updates: updated } });
+    } catch {
+      dispatch({
+        type: "ADD_TOAST",
+        payload: { id: Date.now().toString(), message: "Failed to move candidate.", variant: "error" },
+      });
+    } finally {
+      dragCandidateId.current = null;
+    }
+  };
 
   return (
     <div className="animate-fade-in">
@@ -53,7 +92,16 @@ const Pipeline: FC = () => {
               <option key={j.id} value={j.id}>{j.title}</option>
             ))}
           </select>
-          <span className="text-[12px] text-[var(--color-text-muted)]">
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-bold"
+            style={{
+              background: "rgba(31,117,185,0.10)",
+              color: "#1F75B9",
+              border: "1.5px solid rgba(31,117,185,0.25)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+            }}
+          >
             {filteredCandidates.length} candidate{filteredCandidates.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -63,25 +111,44 @@ const Pipeline: FC = () => {
         {PIPELINE_STAGES.map((stage) => {
           const items = filteredCandidates.filter((c) => c.stage === stage);
           const sc = STAGE_COLORS[stage];
+          const isOver = dragOverStage === stage;
 
           return (
-            <div key={stage} className={`${mob ? "min-w-[200px]" : "min-w-[200px] flex-1"}`}>
+            <div
+              key={stage}
+              className={`${mob ? "min-w-[200px]" : "min-w-[200px] flex-1"} transition-all duration-150`}
+              onDragOver={(e) => handleDragOver(e, stage as Stage)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, stage as Stage)}
+            >
               {/* Column Header */}
               <div className="flex items-center gap-2 mb-3 px-1">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: sc.dot }} />
                 <span className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">
                   {stage.replace("Interview", "Int.").replace("Departmental", "Dept.")}
                 </span>
+                {/* Glassmorphism count badge */}
                 <span
-                  className="rounded-full px-2 py-0.5 text-[11px] font-bold shrink-0 ml-auto"
-                  style={{ background: sc.bg, color: sc.text }}
+                  className="rounded-full px-2.5 py-0.5 text-[11px] font-bold shrink-0 ml-auto shadow-sm"
+                  style={{
+                    background: `${sc.dot}28`,
+                    color: sc.dot,
+                    border: `1.5px solid ${sc.dot}55`,
+                    backdropFilter: "blur(6px)",
+                    WebkitBackdropFilter: "blur(6px)",
+                    minWidth: "22px",
+                    textAlign: "center",
+                  }}
                 >
                   {items.length}
                 </span>
               </div>
 
-              {/* Cards */}
-              <div className="flex flex-col gap-2.5">
+              {/* Drop Zone */}
+              <div
+                className="flex flex-col gap-2.5 rounded-[var(--radius-lg)] min-h-[60px] transition-all duration-150 p-1"
+                style={isOver ? { outline: `2px solid ${sc.dot}`, outlineOffset: "2px", backgroundColor: `${sc.dot}0d` } : {}}
+              >
                 {items.map((c) => {
                   const initials = (c.application?.name ?? "Unknown")
                     .split(" ")
@@ -93,7 +160,9 @@ const Pipeline: FC = () => {
                   return (
                     <div
                       key={c.id}
-                      className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] p-3.5 shadow-[var(--shadow-card)] cursor-pointer transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5"
+                      draggable
+                      onDragStart={() => handleDragStart(c.id)}
+                      className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] p-3.5 shadow-[var(--shadow-card)] cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5 active:opacity-60 active:scale-95"
                       style={{ borderLeft: `3px solid ${sc.dot}` }}
                       onClick={() => dispatch({ type: "SELECT_CANDIDATE", payload: c })}
                     >
@@ -115,8 +184,16 @@ const Pipeline: FC = () => {
                   );
                 })}
                 {items.length === 0 && (
-                  <div className="p-6 text-center text-[var(--color-text-placeholder)] text-xs border-2 border-dashed border-[#DDE8F0] rounded-[var(--radius-md)]">
-                    Empty
+                  <div
+                    className={`p-6 text-center text-[var(--color-text-placeholder)] text-xs border-2 border-dashed rounded-[var(--radius-md)] transition-colors duration-150 ${
+                      isOver ? "border-opacity-60" : ""
+                    }`}
+                    style={isOver
+                      ? { borderColor: sc.dot, color: sc.dot, background: `${sc.dot}0d` }
+                      : { borderColor: "#DDE8F0" }
+                    }
+                  >
+                    {isOver ? "Drop here" : "Empty"}
                   </div>
                 )}
               </div>
