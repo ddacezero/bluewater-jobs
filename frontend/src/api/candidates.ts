@@ -3,7 +3,7 @@
  * Uses the same Bearer-token pattern as api/jobs.ts.
  */
 
-import type { Candidate } from "../data/types";
+import type { Candidate, CandidateNote } from "../data/types";
 
 const API_BASE = "http://localhost:8000/api/candidates";
 
@@ -70,6 +70,22 @@ export async function uploadExamResult(id: number, file: File): Promise<Candidat
     body: fd,
   });
   if (!res.ok) throw new Error("Failed to upload exam result.");
+  return res.json();
+}
+
+export async function listNotes(candidateId: number): Promise<CandidateNote[]> {
+  const res = await fetch(`${API_BASE}/${candidateId}/notes/`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Failed to fetch notes.");
+  return res.json();
+}
+
+export async function createNote(candidateId: number, content: string): Promise<CandidateNote> {
+  const res = await fetch(`${API_BASE}/${candidateId}/notes/`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+  if (!res.ok) throw new Error("Failed to create note.");
   return res.json();
 }
 

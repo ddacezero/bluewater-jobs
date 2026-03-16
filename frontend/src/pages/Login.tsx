@@ -8,6 +8,7 @@ import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useApp } from "../context/AppContext";
 import { listJobs } from "../api/jobs";
+import { listCandidates } from "../api/candidates";
 
 const Login: FC = () => {
   const { login, isAuthenticated } = useAuth();
@@ -28,13 +29,11 @@ const Login: FC = () => {
     setLoading(true);
     try {
       await login(email, password);
-      // After auth succeeds, fetch any API-persisted jobs before showing the dashboard
-      try {
-        const apiJobs = await listJobs();
-        dispatch({ type: "SET_API_JOBS", payload: apiJobs });
-      } catch {
-        // Non-fatal — seeded jobs remain visible if API jobs can't be loaded
-      }
+      // After auth succeeds, fetch API-persisted jobs and candidates before showing the dashboard
+      await Promise.allSettled([
+        listJobs().then((apiJobs) => dispatch({ type: "SET_API_JOBS", payload: apiJobs })),
+        listCandidates().then((apiCandidates) => dispatch({ type: "SET_API_CANDIDATES", payload: apiCandidates })),
+      ]);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");

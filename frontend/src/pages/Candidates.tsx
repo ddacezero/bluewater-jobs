@@ -39,7 +39,7 @@ const Candidates: FC = () => {
           </p>
         </div>
         <button
-          className="bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold inline-flex items-center gap-1.5 shadow-[var(--shadow-btn)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-primary-hover)] active:scale-[0.98]"
+          className="bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)] rounded-[var(--radius-md)] px-5 py-2.5 text-[13.5px] font-semibold inline-flex items-center gap-1.5 shadow-[var(--shadow-btn)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-btn-primary-hover)] active:scale-[0.98]"
           onClick={() => dispatch({ type: "SET_SHOW_ADD_MODAL", payload: true })}
         >
           <PlusIcon />
