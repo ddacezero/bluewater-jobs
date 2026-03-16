@@ -150,3 +150,8 @@ class CandidateCreateSerializer(serializers.Serializer):
     recruiter_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), source="recruiter", required=False, allow_null=True
     )
+
+    def validate_source(self, value: str) -> str:
+        if not value.strip():
+            raise serializers.ValidationError("This field may not be blank.")
+        return value

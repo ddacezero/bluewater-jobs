@@ -34,8 +34,8 @@ class Job(models.Model):
     # Stored as a formatted string matching frontend format, e.g. "Mar 13, 2026"
     posted = models.CharField(max_length=50)
     closed = models.CharField(max_length=50, blank=True, null=True)
-    description = models.TextField(blank=True, default="")
-    qualifications = models.TextField(blank=True, default="")
+    description = models.TextField()
+    qualifications = models.TextField()
 
     class Meta:
         db_table = "jobs"
@@ -60,14 +60,14 @@ class JobApplication(models.Model):
     ]
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="applications")
-    source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default="Website")
+    source = models.CharField(max_length=30, choices=SOURCE_CHOICES)
     name = models.CharField(max_length=200)
     email = models.EmailField()
     phone_number = models.CharField(max_length=50)
     resume = models.FileField(upload_to=applicant_resume_upload_to)
     expected_salary = models.DecimalField(max_digits=12, decimal_places=2)
     cover_letter = models.TextField(blank=True, default="")
-    agreement = models.BooleanField(default=False)
+    agreement = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

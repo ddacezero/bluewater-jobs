@@ -70,9 +70,25 @@ const JobModal: FC = () => {
     });
   };
 
+  const missingRequiredFields = () => {
+    const required = [
+      ["title", form.title],
+      ["description", form.description],
+      ["qualifications", form.qualifications],
+    ] as const;
+    return required
+      .filter(([, value]) => !value.trim())
+      .map(([label]) => label);
+  };
+
   /* ── Save (create or update) ── */
   const save = async () => {
-    if (!form.title || saving) return;
+    if (saving) return;
+    const missing = missingRequiredFields();
+    if (missing.length > 0) {
+      addToast("Title, description, and qualifications are required.", "error");
+      return;
+    }
     setSaving(true);
     try {
       if (isEdit && editJob) {
@@ -275,12 +291,14 @@ const JobModal: FC = () => {
             </div>
 
             <div>
-              <label className={labelClass}>Description</label>
+              <label className={labelClass}>
+                Description <span className="text-[var(--color-danger)]">*</span>
+              </label>
               <textarea
                 className={`${inputClass} resize-y min-h-[80px]`}
                 rows={3}
                 placeholder="Describe the role..."
-                value={form.description || ""}
+                value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
@@ -288,12 +306,14 @@ const JobModal: FC = () => {
             </div>
 
             <div>
-              <label className={labelClass}>Qualifications</label>
+              <label className={labelClass}>
+                Qualifications <span className="text-[var(--color-danger)]">*</span>
+              </label>
               <textarea
                 className={`${inputClass} resize-y min-h-[80px]`}
                 rows={3}
                 placeholder="List required qualifications..."
-                value={form.qualifications || ""}
+                value={form.qualifications}
                 onChange={(e) =>
                   setForm({ ...form, qualifications: e.target.value })
                 }

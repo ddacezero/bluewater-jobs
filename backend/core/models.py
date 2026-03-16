@@ -10,7 +10,7 @@ class User(AbstractUser):
     ]
 
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, blank=True, default="")
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES)
 
     class Meta:
         db_table = "users"
