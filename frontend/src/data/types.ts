@@ -101,7 +101,7 @@ export interface Job {
   posted: string;
   closed?: string;
   description: string;
-  qualifications?: string;
+  qualifications: string;
   /** undefined = seeded/local (frontend-only), "api" = persisted in the backend DB */
   source?: "api";
 }

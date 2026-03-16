@@ -6,7 +6,7 @@ export interface PublicJob {
   type: string;
   posted: string;
   description: string;
-  qualifications?: string | null;
+  qualifications: string;
 }
 
 export interface PublicJobsResponse {

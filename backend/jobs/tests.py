@@ -16,6 +16,8 @@ def make_job():
     return Job.objects.create(
         title="Chef", dept="Kitchen", location="Bluewater Maribago",
         type="Full-time", status="Active", posted="Mar 14, 2026",
+        description="Leads kitchen operations and service execution.",
+        qualifications="Hospitality kitchen experience and team leadership.",
     )
 
 
@@ -251,6 +253,19 @@ class CandidateAPITest(TestCase):
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.data["application"]["name"], "Pedro Cruz")
         self.assertEqual(resp.data["stage"], "Applied")
+
+    def test_post_requires_source(self):
+        self._auth(self.manager)
+        resp = self.client.post("/api/candidates/", {
+            "name": "Pedro Cruz",
+            "email": "pedro@test.com",
+            "phone_number": "09179999999",
+            "resume": make_resume(),
+            "expected_salary": "30000",
+            "job_id": self.job.id,
+        }, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("source", resp.data)
 
     def test_post_restricted_to_manager_roles(self):
         self._auth(self.specialist)
